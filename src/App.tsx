@@ -124,13 +124,17 @@ const legalBasisItems = [
   'Внутренний алгоритм дисциплинарной процедуры вашей организации',
 ];
 
+type AppStage = 'landing' | 'catalog' | 'workspace';
+
 const App = () => {
+  const [appStage, setAppStage] = useState<AppStage>('landing');
+  const [catalogScenarioId, setCatalogScenarioId] = useState<string | null>(null);
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(scenarios[0].id);
   const [progressState, setProgressState] = useState<ProgressState>({});
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isEditingAnswers, setIsEditingAnswers] = useState(false);
-  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [shouldScrollToCurrentStep, setShouldScrollToCurrentStep] = useState(false);
 
   useEffect(() => {
     const stored = loadProgress();
@@ -150,7 +154,7 @@ const App = () => {
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
 
-    if (!isCatalogOpen) {
+    if (appStage === 'landing') {
       document.body.style.overflow = 'hidden';
       document.documentElement.style.overflow = 'hidden';
     } else {
@@ -162,10 +166,10 @@ const App = () => {
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
     };
-  }, [isCatalogOpen]);
+  }, [appStage]);
 
   useEffect(() => {
-    if (!isCatalogOpen) {
+    if (appStage !== 'catalog') {
       return;
     }
 
@@ -174,11 +178,16 @@ const App = () => {
     });
 
     return () => window.cancelAnimationFrame(frameId);
-  }, [isCatalogOpen]);
+  }, [appStage]);
 
   const selectedScenario = useMemo(
     () => scenarios.find((scenario) => scenario.id === selectedScenarioId) ?? scenarios[0],
     [selectedScenarioId],
+  );
+
+  const catalogScenario = useMemo(
+    () => scenarios.find((scenario) => scenario.id === catalogScenarioId) ?? null,
+    [catalogScenarioId],
   );
 
   const scenarioProgress = useMemo(
@@ -309,6 +318,37 @@ const App = () => {
     branchQuestions.length > 0 &&
     (!allQuestionsAnswered || isEditingAnswers || !scenarioProgress.questionnaireCompleted);
 
+  useEffect(() => {
+    if (!shouldScrollToCurrentStep || appStage !== 'workspace' || showQuestionnaire) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      document.getElementById('current-step-card')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+      setShouldScrollToCurrentStep(false);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [appStage, shouldScrollToCurrentStep, showQuestionnaire]);
+
+  const catalogProgress = useMemo(
+    () => (catalogScenario ? getProgressForScenario(progressState, catalogScenario.id) : emptyScenarioProgress()),
+    [catalogScenario, progressState],
+  );
+
+  const catalogVisibleSteps = useMemo(
+    () => (catalogScenario ? getVisibleSteps(catalogScenario, catalogProgress.answers) : []),
+    [catalogProgress.answers, catalogScenario],
+  );
+
+  const catalogVisibleTemplates = useMemo(
+    () => (catalogScenario ? getVisibleRouteTemplates(catalogVisibleSteps, catalogProgress.answers) : []),
+    [catalogProgress.answers, catalogScenario, catalogVisibleSteps],
+  );
+
   const markStep = (scenarioId: string, stepId: string, checked: boolean) => {
     setProgressState((current) => {
       const scenarioData = scenarios.find((scenario) => scenario.id === scenarioId);
@@ -432,29 +472,72 @@ const App = () => {
     completedIds.length === visibleSteps.length
       ? 'Маршрут завершен'
       : visibleSteps[getFirstOpenStepIndex(visibleSteps, completedIds)]?.title ?? 'Заполните опрос';
+  const scenarioCompletionPercent = getCompletionPercent(visibleSteps, completedIds);
+  const currentStepNumber = activeStep ? activeStepIndex + 1 : 0;
+  const canGoToPreviousStep = activeStepIndex > 0;
+  const canGoToNextStep =
+    activeStepIndex < visibleSteps.length - 1 &&
+    isStepUnlocked(visibleSteps, activeStepIndex + 1, completedIds);
 
   const openCatalog = () => {
-    setIsCatalogOpen(true);
+    setCatalogScenarioId(null);
+    setAppStage('catalog');
   };
 
   const returnToLanding = () => {
     window.scrollTo({ top: 0, behavior: 'auto' });
-    setIsCatalogOpen(false);
+    setCatalogScenarioId(null);
+    setAppStage('landing');
+  };
+
+  const openWorkspace = () => {
+    if (!catalogScenarioId) {
+      return;
+    }
+
+    setSelectedScenarioId(catalogScenarioId);
+    setActiveStepIndex(0);
+    setAppStage('workspace');
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
+  const returnToCatalog = () => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    setCatalogScenarioId(selectedScenario.id);
+    setAppStage('catalog');
+  };
+
+  const goToPreviousStep = () => {
+    if (!canGoToPreviousStep) {
+      return;
+    }
+
+    setShouldScrollToCurrentStep(true);
+    setActiveStepIndex((current) => Math.max(0, current - 1));
+  };
+
+  const goToNextStep = () => {
+    if (!canGoToNextStep) {
+      return;
+    }
+
+    setShouldScrollToCurrentStep(true);
+    setActiveStepIndex((current) => Math.min(visibleSteps.length - 1, current + 1));
   };
 
   return (
-    <div className={`page-shell ${!isCatalogOpen ? 'page-shell--landing' : ''}`}>
+    <div className={`page-shell ${appStage === 'landing' ? 'page-shell--landing' : ''}`}>
       <div className="page-backdrop" />
-      <header className={`hero ${!isCatalogOpen ? 'hero--landing' : ''}`}>
-        <div className="hero-copy">
-          <span className="eyebrow">Трудовая дисциплина</span>
-          <h1>Дисциплинарная процедура без ошибок</h1>
-          <p className="hero-lead">
-            Рабочий инструмент для руководителя и HR, который помогает пройти дисциплинарную
-            процедуру в правильной последовательности, не упустить сроки и вовремя подготовить
-            нужные документы.
-          </p>
-          {!isCatalogOpen ? (
+      {appStage === 'landing' ? (
+        <header className="hero hero--landing">
+          <div className="hero-copy">
+            <span className="eyebrow">Трудовая дисциплина</span>
+            <h1>Дисциплинарная процедура без ошибок</h1>
+            <p className="hero-lead">
+              Рабочий инструмент для руководителя и HR, который помогает пройти дисциплинарную
+              процедуру в правильной последовательности, не упустить сроки и вовремя подготовить
+              нужные документы.
+            </p>
             <div className="hero-dashboard">
               <section className="hero-info-card">
                 <strong>Что предлагает сервис</strong>
@@ -480,102 +563,208 @@ const App = () => {
                 </div>
               </section>
             </div>
-          ) : null}
-          <div className="hero-actions">
-            <button className="primary-button" onClick={openCatalog}>
-              Перейти к ситуациям
-            </button>
-            {isCatalogOpen ? (
-              <button className="secondary-button" onClick={returnToLanding}>
-                Назад на главную
+            <div className="hero-actions">
+              <button className="primary-button" onClick={openCatalog}>
+                Перейти к ситуациям
               </button>
-            ) : null}
-            <span className="hero-note">
-              Основа: ст. 192–194 ТК РФ и ваш алгоритм процедуры
-            </span>
+              <span className="hero-note">
+                Основа: ст. 192–194 ТК РФ и ваш алгоритм процедуры
+              </span>
+            </div>
           </div>
-        </div>
-        <div className="hero-panel">
-          <div className="metric-card">
-            <strong>{scenarios.length}</strong>
-            <span>типовых ситуаций для запуска процедуры по понятному маршруту</span>
-          </div>
-          <div className="metric-card">
-            <strong>{allTemplates.length}</strong>
-            <span>видов документов уже включено в структуру сервиса</span>
-          </div>
-          <div className="metric-card">
-            <strong>1</strong>
-            <span>ключевой стоп-фактор: не запускать процедуру во время отпуска и больничного</span>
-          </div>
-          {!isCatalogOpen ? (
+          <div className="hero-panel">
+            <div className="metric-card">
+              <strong>{scenarios.length}</strong>
+              <span>типовых ситуаций для запуска процедуры по понятному маршруту</span>
+            </div>
+            <div className="metric-card">
+              <strong>{allTemplates.length}</strong>
+              <span>видов документов уже включено в структуру сервиса</span>
+            </div>
+            <div className="metric-card">
+              <strong>1</strong>
+              <span>ключевой стоп-фактор: не запускать процедуру во время отпуска и больничного</span>
+            </div>
             <div className="metric-card metric-card--accent">
               <strong>Рабочий контур</strong>
               <span>вместо разрозненных заметок и папок у вас один единый порядок действий</span>
             </div>
-          ) : null}
-        </div>
-      </header>
+          </div>
+        </header>
+      ) : null}
 
-      {isCatalogOpen ? (
+      {appStage === 'catalog' ? (
         <main className="layout layout--revealed">
-        <section className="catalog-toolbar">
-          <button className="secondary-button" onClick={returnToLanding}>
-            Назад на главную
-          </button>
-          <p>Каталог открыт: выберите ситуацию и сервис покажет маршрут, документы и подсказки.</p>
+          <section className="zone-bar">
+            <div className="zone-steps">
+              <span className="zone-chip is-complete">1. Главная</span>
+              <span className="zone-chip is-active">2. Каталог ситуаций</span>
+              <span className="zone-chip">3. Рабочая зона</span>
+            </div>
+            <div className="zone-actions">
+              <button className="secondary-button" onClick={returnToLanding}>
+                Назад на главную
+              </button>
+              <button className="primary-button" onClick={openWorkspace} disabled={!catalogScenario}>
+                Открыть рабочую зону
+              </button>
+            </div>
+          </section>
+
+          <section className="catalog-stage" id="scenario-catalog">
+            <div className="catalog-stage-header section-heading">
+              <span className="eyebrow">Отдельная зона выбора</span>
+              <h2>Сначала выберите ситуацию, потом переходите к маршруту</h2>
+              <p>
+                Здесь открывается только каталог. Рабочая часть сценария появится отдельно, когда вы
+                выберете нужную ситуацию и подтвердите переход.
+              </p>
+              <div className="catalog-flow">
+                <span className="flow-step is-active">1. Выберите ситуацию</span>
+                <span className="flow-step">2. Откройте маршрут</span>
+              </div>
+            </div>
+
+            <div className="catalog-stage-layout">
+              <section className="catalog-section">
+                <div className="section-heading">
+                  <span className="eyebrow">Каталог ситуаций</span>
+                  <h3>Выберите типовую ситуацию</h3>
+                </div>
+
+                <div className="scenario-grid">
+                  {scenarios.map((scenario) => {
+                    const scenarioRouteSteps = getVisibleSteps(
+                      scenario,
+                      getProgressForScenario(progressState, scenario.id).answers,
+                    );
+                    const progress = getProgressForScenario(progressState, scenario.id);
+                    const completedForScenario = progress.completedStepIds.filter((id) =>
+                      scenarioRouteSteps.some((step) => step.id === id),
+                    );
+                    const percent = getCompletionPercent(scenarioRouteSteps, completedForScenario);
+                    const isCatalogSelected = catalogScenarioId === scenario.id;
+
+                    return (
+                      <button
+                        key={scenario.id}
+                        className={`scenario-card ${isCatalogSelected ? 'is-active' : ''}`}
+                        onClick={() => setCatalogScenarioId(scenario.id)}
+                        aria-pressed={isCatalogSelected}
+                        style={{ '--scenario-accent': scenario.accent } as CSSProperties}
+                      >
+                        <div className="scenario-card-top">
+                          <span className={`risk-pill ${riskLevelClassMap[scenario.riskLevel]}`}>
+                            {scenario.riskLevel}
+                          </span>
+                          <span className="scenario-short">{scenario.shortTitle}</span>
+                        </div>
+                        <h3>{scenario.title}</h3>
+                        <p>{scenario.description}</p>
+                        <ul>
+                          {scenario.whenToUse.slice(0, 2).map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                        <div className="scenario-card-footer">
+                          <div className="scenario-progress">
+                            <span>Прогресс</span>
+                            <strong>{percent}%</strong>
+                          </div>
+                          <span className={`scenario-select ${isCatalogSelected ? 'is-selected' : ''}`}>
+                            {isCatalogSelected ? 'Выбрано' : 'Выбрать'}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <aside className="catalog-preview-card">
+                {catalogScenario ? (
+                  <>
+                    <span className="eyebrow">Выбранная ситуация</span>
+                    <h3>{catalogScenario.title}</h3>
+                    <p>{catalogScenario.intro}</p>
+                    <div className="summary-line">
+                      <span>Шагов в маршруте</span>
+                      <strong>{catalogVisibleSteps.length}</strong>
+                    </div>
+                    <div className="summary-line">
+                      <span>Документов в ветке</span>
+                      <strong>{catalogVisibleTemplates.length}</strong>
+                    </div>
+                    <div className="summary-line">
+                      <span>Прогресс по ситуации</span>
+                      <strong>
+                        {getCompletionPercent(catalogVisibleSteps, catalogProgress.completedStepIds)}%
+                      </strong>
+                    </div>
+                    <button className="primary-button" onClick={openWorkspace}>
+                      Перейти к маршруту
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="eyebrow">Следующий шаг</span>
+                    <h3>Рабочая зона откроется после выбора ситуации</h3>
+                    <p>
+                      Сейчас вы находитесь только в каталоге. Нажмите на карточку нужной ситуации,
+                      и после этого станет доступен переход к пошаговому маршруту.
+                    </p>
+                  </>
+                )}
+              </aside>
+            </div>
+          </section>
+        </main>
+      ) : null}
+
+      {appStage === 'workspace' ? (
+        <main className="layout layout--revealed">
+        <section className="zone-bar">
+          <div className="zone-steps">
+            <span className="zone-chip is-complete">1. Главная</span>
+            <span className="zone-chip is-complete">2. Каталог ситуаций</span>
+            <span className="zone-chip is-active">3. Рабочая зона</span>
+          </div>
+          <div className="zone-actions">
+            <button className="secondary-button" onClick={returnToCatalog}>
+              Назад к ситуациям
+            </button>
+            <button className="secondary-button" onClick={returnToLanding}>
+              На главную
+            </button>
+          </div>
         </section>
 
-        <section className="catalog-section" id="scenario-catalog">
-          <div className="section-heading">
-            <span className="eyebrow">Каталог ситуаций</span>
-            <h2>Выберите типовую ситуацию</h2>
-            <p>
-              Все сценарии построены вокруг одного безопасного юридического маршрута, но адаптированы
-              под конкретные риски и документы.
-            </p>
-          </div>
-
-          <div className="scenario-grid">
-            {scenarios.map((scenario) => {
-              const scenarioRouteSteps = getVisibleSteps(
-                scenario,
-                getProgressForScenario(progressState, scenario.id).answers,
-              );
-              const progress = getProgressForScenario(progressState, scenario.id);
-              const completedForScenario = progress.completedStepIds.filter((id) =>
-                scenarioRouteSteps.some((step) => step.id === id),
-              );
-              const percent = getCompletionPercent(scenarioRouteSteps, completedForScenario);
-
-              return (
-                <button
-                  key={scenario.id}
-                  className={`scenario-card ${selectedScenario.id === scenario.id ? 'is-active' : ''}`}
-                  onClick={() => setSelectedScenarioId(scenario.id)}
-                  style={{ '--scenario-accent': scenario.accent } as CSSProperties}
-                >
-                  <div className="scenario-card-top">
-                    <span className={`risk-pill ${riskLevelClassMap[scenario.riskLevel]}`}>
-                      {scenario.riskLevel}
-                    </span>
-                    <span className="scenario-short">{scenario.shortTitle}</span>
-                  </div>
-                  <h3>{scenario.title}</h3>
-                  <p>{scenario.description}</p>
-                  <ul>
-                    {scenario.whenToUse.slice(0, 2).map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                  <div className="scenario-progress">
-                    <span>Прогресс</span>
-                    <strong>{percent}%</strong>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+        <section className="workspace-entry-card">
+          <span className="eyebrow">Отдельная рабочая зона</span>
+          <h2>{selectedScenario.title}</h2>
+          <p>
+            Здесь открыт только маршрут по выбранной ситуации. Чтобы перейти к другой ситуации,
+            сначала вернитесь в каталог.
+          </p>
+          {!showQuestionnaire && activeStep ? (
+            <div className="workspace-progress-card">
+              <div className="workspace-progress-top">
+                <div>
+                  <span className="workspace-progress-label">Текущий шаг</span>
+                  <strong>
+                    Шаг {currentStepNumber} из {visibleSteps.length}
+                  </strong>
+                </div>
+                <div className="workspace-progress-meta">
+                  <span>{scenarioCompletionPercent}% выполнено</span>
+                  <strong>{activeStep.title}</strong>
+                </div>
+              </div>
+              <div className="workspace-progress-bar" aria-hidden="true">
+                <span style={{ width: `${scenarioCompletionPercent}%` }} />
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section className="workspace-section">
@@ -731,7 +920,14 @@ const App = () => {
                           className={`stepper-item ${checked ? 'is-complete' : ''} ${
                             activeStepIndex === index ? 'is-current' : ''
                           } ${!unlocked ? 'is-locked' : ''}`}
-                          onClick={() => unlocked && setActiveStepIndex(index)}
+                          onClick={() => {
+                            if (!unlocked) {
+                              return;
+                            }
+
+                            setShouldScrollToCurrentStep(true);
+                            setActiveStepIndex(index);
+                          }}
                           disabled={!unlocked}
                         >
                           <span className="step-index">{index + 1}</span>
@@ -745,7 +941,7 @@ const App = () => {
                   </div>
                 </div>
 
-                <article className="step-detail-card">
+                <article className="step-detail-card" id="current-step-card">
                   <div className="step-detail-header">
                     <div>
                       <span className="eyebrow">Текущий этап</span>
@@ -762,6 +958,27 @@ const App = () => {
                       />
                       <span>Этап выполнен</span>
                     </label>
+                  </div>
+
+                  <div className="step-navigation">
+                    <button
+                      className="secondary-button"
+                      onClick={goToPreviousStep}
+                      disabled={!canGoToPreviousStep}
+                    >
+                      Предыдущий шаг
+                    </button>
+                    <div className="step-navigation-note">
+                      <span>Следующее действие</span>
+                      <strong>{nextAction}</strong>
+                    </div>
+                    <button
+                      className="primary-button"
+                      onClick={goToNextStep}
+                      disabled={!canGoToNextStep}
+                    >
+                      Следующий шаг
+                    </button>
                   </div>
 
                   <div className="detail-grid">
