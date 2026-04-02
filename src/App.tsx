@@ -274,7 +274,19 @@ const App = () => {
   const downloadedIds = scenarioProgress.downloadedTemplateIds;
 
   useEffect(() => {
-    setActiveStepIndex(getFirstOpenStepIndex(visibleSteps, completedIds));
+    setActiveStepIndex((currentIndex) => {
+      if (visibleSteps.length === 0) {
+        return 0;
+      }
+
+      const safeIndex = Math.min(currentIndex, visibleSteps.length - 1);
+
+      if (isStepUnlocked(visibleSteps, safeIndex, completedIds)) {
+        return safeIndex;
+      }
+
+      return getFirstOpenStepIndex(visibleSteps, completedIds);
+    });
   }, [completedIds, visibleSteps]);
 
   const activeStep = visibleSteps[activeStepIndex] ?? visibleSteps[0] ?? null;
@@ -478,6 +490,8 @@ const App = () => {
   const canGoToNextStep =
     activeStepIndex < visibleSteps.length - 1 &&
     isStepUnlocked(visibleSteps, activeStepIndex + 1, completedIds);
+  const isCurrentStepCompleted = activeStep ? completedIds.includes(activeStep.id) : false;
+  const shouldHighlightNextStep = isCurrentStepCompleted && canGoToNextStep;
 
   const openCatalog = () => {
     setCatalogScenarioId(null);
@@ -973,7 +987,9 @@ const App = () => {
                       <strong>{nextAction}</strong>
                     </div>
                     <button
-                      className="primary-button"
+                      className={`primary-button step-next-button ${
+                        shouldHighlightNextStep ? 'step-next-button--highlighted' : ''
+                      }`}
                       onClick={goToNextStep}
                       disabled={!canGoToNextStep}
                     >
