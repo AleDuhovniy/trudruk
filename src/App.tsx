@@ -112,12 +112,25 @@ const branchRiskLabelMap: Record<BranchRisk, string> = {
   red: 'Красный уровень',
 };
 
+const serviceOffers = [
+  'Пошаговый маршрут по типовой дисциплинарной ситуации',
+  'Подбор обязательных документов и шаблонов по этапам',
+  'Подсказки по рискам, срокам и действиям перед следующим шагом',
+];
+
+const legalBasisItems = [
+  'Статьи 192–194 ТК РФ',
+  'Локальные акты и правила внутреннего трудового распорядка',
+  'Внутренний алгоритм дисциплинарной процедуры вашей организации',
+];
+
 const App = () => {
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(scenarios[0].id);
   const [progressState, setProgressState] = useState<ProgressState>({});
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isEditingAnswers, setIsEditingAnswers] = useState(false);
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
   useEffect(() => {
     const stored = loadProgress();
@@ -132,6 +145,36 @@ const App = () => {
 
     saveProgress(progressState);
   }, [isHydrated, progressState]);
+
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    if (!isCatalogOpen) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [isCatalogOpen]);
+
+  useEffect(() => {
+    if (!isCatalogOpen) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      document.getElementById('scenario-catalog')?.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [isCatalogOpen]);
 
   const selectedScenario = useMemo(
     () => scenarios.find((scenario) => scenario.id === selectedScenarioId) ?? scenarios[0],
@@ -390,46 +433,99 @@ const App = () => {
       ? 'Маршрут завершен'
       : visibleSteps[getFirstOpenStepIndex(visibleSteps, completedIds)]?.title ?? 'Заполните опрос';
 
+  const openCatalog = () => {
+    setIsCatalogOpen(true);
+  };
+
+  const returnToLanding = () => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    setIsCatalogOpen(false);
+  };
+
   return (
-    <div className="page-shell">
+    <div className={`page-shell ${!isCatalogOpen ? 'page-shell--landing' : ''}`}>
       <div className="page-backdrop" />
-      <header className="hero">
+      <header className={`hero ${!isCatalogOpen ? 'hero--landing' : ''}`}>
         <div className="hero-copy">
-          <span className="eyebrow">Дисциплина труда</span>
+          <span className="eyebrow">Трудовая дисциплина</span>
           <h1>Дисциплинарная процедура без ошибок</h1>
-          <p>
-            Выберите ситуацию, пройдите процедуру по этапам и скачивайте нужные шаблоны
-            документов. Прогресс сохраняется прямо в браузере.
+          <p className="hero-lead">
+            Рабочий инструмент для руководителя и HR, который помогает пройти дисциплинарную
+            процедуру в правильной последовательности, не упустить сроки и вовремя подготовить
+            нужные документы.
           </p>
+          {!isCatalogOpen ? (
+            <div className="hero-dashboard">
+              <section className="hero-info-card">
+                <strong>Что предлагает сервис</strong>
+                <div className="hero-info-list">
+                  {serviceOffers.map((item) => (
+                    <div className="hero-info-item" key={item}>
+                      <span className="hero-info-mark" />
+                      <p>{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="hero-info-card">
+                <strong>Нормативная база</strong>
+                <div className="hero-info-list">
+                  {legalBasisItems.map((item) => (
+                    <div className="hero-info-item" key={item}>
+                      <span className="hero-info-mark hero-info-mark--neutral" />
+                      <p>{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          ) : null}
           <div className="hero-actions">
-            <button
-              className="primary-button"
-              onClick={() => {
-                document.getElementById('scenario-catalog')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            >
-              Перейти к сценариям
+            <button className="primary-button" onClick={openCatalog}>
+              Перейти к ситуациям
             </button>
-            <span className="hero-note">Основа: ст. 192–194 ТК РФ и ваш алгоритм процедуры</span>
+            {isCatalogOpen ? (
+              <button className="secondary-button" onClick={returnToLanding}>
+                Назад на главную
+              </button>
+            ) : null}
+            <span className="hero-note">
+              Основа: ст. 192–194 ТК РФ и ваш алгоритм процедуры
+            </span>
           </div>
         </div>
         <div className="hero-panel">
           <div className="metric-card">
             <strong>{scenarios.length}</strong>
-            <span>сценариев для первой версии</span>
+            <span>типовых ситуаций для запуска процедуры по понятному маршруту</span>
           </div>
           <div className="metric-card">
             <strong>{allTemplates.length}</strong>
-            <span>типов документов поддерживает структура</span>
+            <span>видов документов уже включено в структуру сервиса</span>
           </div>
           <div className="metric-card">
             <strong>1</strong>
-            <span>критичный принцип: не работать во время отпуска и больничного</span>
+            <span>ключевой стоп-фактор: не запускать процедуру во время отпуска и больничного</span>
           </div>
+          {!isCatalogOpen ? (
+            <div className="metric-card metric-card--accent">
+              <strong>Рабочий контур</strong>
+              <span>вместо разрозненных заметок и папок у вас один единый порядок действий</span>
+            </div>
+          ) : null}
         </div>
       </header>
 
-      <main className="layout">
+      {isCatalogOpen ? (
+        <main className="layout layout--revealed">
+        <section className="catalog-toolbar">
+          <button className="secondary-button" onClick={returnToLanding}>
+            Назад на главную
+          </button>
+          <p>Каталог открыт: выберите ситуацию и сервис покажет маршрут, документы и подсказки.</p>
+        </section>
+
         <section className="catalog-section" id="scenario-catalog">
           <div className="section-heading">
             <span className="eyebrow">Каталог ситуаций</span>
@@ -816,7 +912,8 @@ const App = () => {
             ))}
           </div>
         </section>
-      </main>
+        </main>
+      ) : null}
     </div>
   );
 };
