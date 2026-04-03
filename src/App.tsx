@@ -113,15 +113,15 @@ const branchRiskLabelMap: Record<BranchRisk, string> = {
 };
 
 const serviceOffers = [
-  'Пошаговый маршрут по типовой дисциплинарной ситуации',
-  'Подбор обязательных документов и шаблонов по этапам',
-  'Подсказки по рискам, срокам и действиям перед следующим шагом',
+  'Пошаговая схема действий по типовой дисциплинарной ситуации',
+  'Подбор обязательных документов и шаблонов на каждом этапе',
+  'Подсказки по срокам, рискам и дальнейшим действиям',
 ];
 
 const legalBasisItems = [
   'Статьи 192–194 ТК РФ',
   'Локальные акты и правила внутреннего трудового распорядка',
-  'Внутренний алгоритм дисциплинарной процедуры вашей организации',
+  'Внутренний порядок дисциплинарной процедуры в вашей организации',
 ];
 
 type AppStage = 'landing' | 'catalog' | 'workspace';
@@ -456,6 +456,14 @@ const App = () => {
   };
 
   const resetScenarioProgress = () => {
+    const shouldReset = window.confirm(
+      'Сбросить весь прогресс по этой ситуации? Отметки этапов, ответы и история документов будут очищены.',
+    );
+
+    if (!shouldReset) {
+      return;
+    }
+
     setProgressState((current) => ({
       ...current,
       [selectedScenario.id]: emptyScenarioProgress(),
@@ -482,7 +490,7 @@ const App = () => {
 
   const nextAction =
     completedIds.length === visibleSteps.length
-      ? 'Маршрут завершен'
+      ? 'Процедура завершена'
       : visibleSteps[getFirstOpenStepIndex(visibleSteps, completedIds)]?.title ?? 'Заполните опрос';
   const scenarioCompletionPercent = getCompletionPercent(visibleSteps, completedIds);
   const currentStepNumber = activeStep ? activeStepIndex + 1 : 0;
@@ -492,6 +500,19 @@ const App = () => {
     isStepUnlocked(visibleSteps, activeStepIndex + 1, completedIds);
   const isCurrentStepCompleted = activeStep ? completedIds.includes(activeStep.id) : false;
   const shouldHighlightNextStep = isCurrentStepCompleted && canGoToNextStep;
+  const stepNavigationLabel =
+    completedIds.length === visibleSteps.length
+      ? 'Статус процедуры'
+      : isCurrentStepCompleted
+        ? 'Следующий шаг'
+        : 'Что нужно сделать';
+  const stepNavigationHint =
+    completedIds.length === visibleSteps.length
+      ? 'Все этапы уже отмечены как выполненные.'
+      : isCurrentStepCompleted
+        ? nextAction
+        : 'Сначала отметьте текущий этап как выполненный.';
+  const hasCurrentStepTemplates = currentStepTemplates.length > 0;
 
   const openCatalog = () => {
     setCatalogScenarioId(null);
@@ -548,9 +569,8 @@ const App = () => {
             <span className="eyebrow">Трудовая дисциплина</span>
             <h1>Дисциплинарная процедура без ошибок</h1>
             <p className="hero-lead">
-              Рабочий инструмент для руководителя и HR, который помогает пройти дисциплинарную
-              процедуру в правильной последовательности, не упустить сроки и вовремя подготовить
-              нужные документы.
+              Инструмент для руководителя и HR, который помогает пройти дисциплинарную процедуру
+              по шагам, не пропустить сроки и вовремя подготовить нужные документы.
             </p>
             <div className="hero-dashboard">
               <section className="hero-info-card">
@@ -582,26 +602,26 @@ const App = () => {
                 Перейти к ситуациям
               </button>
               <span className="hero-note">
-                Основа: ст. 192–194 ТК РФ и ваш алгоритм процедуры
+                Основа: статьи 192–194 ТК РФ и внутренний порядок процедуры
               </span>
             </div>
           </div>
           <div className="hero-panel">
             <div className="metric-card">
               <strong>{scenarios.length}</strong>
-              <span>типовых ситуаций для запуска процедуры по понятному маршруту</span>
+              <span>типовых ситуаций с понятным порядком работы</span>
             </div>
             <div className="metric-card">
               <strong>{allTemplates.length}</strong>
-              <span>видов документов уже включено в структуру сервиса</span>
+              <span>видов документов уже включено в систему</span>
             </div>
             <div className="metric-card">
               <strong>1</strong>
-              <span>ключевой стоп-фактор: не запускать процедуру во время отпуска и больничного</span>
+              <span>главное ограничение: не начинать процедуру во время отпуска и больничного</span>
             </div>
             <div className="metric-card metric-card--accent">
-              <strong>Рабочий контур</strong>
-              <span>вместо разрозненных заметок и папок у вас один единый порядок действий</span>
+              <strong>Единый порядок работы</strong>
+              <span>вместо заметок и разрозненных файлов у вас один понятный порядок действий</span>
             </div>
           </div>
         </header>
@@ -613,29 +633,29 @@ const App = () => {
             <div className="zone-steps">
               <span className="zone-chip is-complete">1. Главная</span>
               <span className="zone-chip is-active">2. Каталог ситуаций</span>
-              <span className="zone-chip">3. Рабочая зона</span>
+              <span className="zone-chip">3. Порядок действий</span>
             </div>
             <div className="zone-actions">
               <button className="secondary-button" onClick={returnToLanding}>
                 Назад на главную
               </button>
               <button className="primary-button" onClick={openWorkspace} disabled={!catalogScenario}>
-                Открыть рабочую зону
+                Перейти к порядку действий
               </button>
             </div>
           </section>
 
           <section className="catalog-stage" id="scenario-catalog">
             <div className="catalog-stage-header section-heading">
-              <span className="eyebrow">Отдельная зона выбора</span>
-              <h2>Сначала выберите ситуацию, потом переходите к маршруту</h2>
+              <span className="eyebrow">Выбор ситуации</span>
+              <h2>Сначала выберите ситуацию, затем откройте порядок действий</h2>
               <p>
-                Здесь открывается только каталог. Рабочая часть сценария появится отдельно, когда вы
+                Здесь открыт только каталог. Пошаговый порядок действий появится после того, как вы
                 выберете нужную ситуацию и подтвердите переход.
               </p>
               <div className="catalog-flow">
                 <span className="flow-step is-active">1. Выберите ситуацию</span>
-                <span className="flow-step">2. Откройте маршрут</span>
+                <span className="flow-step">2. Перейдите к порядку действий</span>
               </div>
             </div>
 
@@ -702,11 +722,11 @@ const App = () => {
                     <h3>{catalogScenario.title}</h3>
                     <p>{catalogScenario.intro}</p>
                     <div className="summary-line">
-                      <span>Шагов в маршруте</span>
+                      <span>Шагов в порядке действий</span>
                       <strong>{catalogVisibleSteps.length}</strong>
                     </div>
                     <div className="summary-line">
-                      <span>Документов в ветке</span>
+                      <span>Документов по ситуации</span>
                       <strong>{catalogVisibleTemplates.length}</strong>
                     </div>
                     <div className="summary-line">
@@ -716,16 +736,16 @@ const App = () => {
                       </strong>
                     </div>
                     <button className="primary-button" onClick={openWorkspace}>
-                      Перейти к маршруту
+                      Открыть порядок действий
                     </button>
                   </>
                 ) : (
                   <>
                     <span className="eyebrow">Следующий шаг</span>
-                    <h3>Рабочая зона откроется после выбора ситуации</h3>
+                    <h3>После выбора ситуации откроется порядок действий</h3>
                     <p>
-                      Сейчас вы находитесь только в каталоге. Нажмите на карточку нужной ситуации,
-                      и после этого станет доступен переход к пошаговому маршруту.
+                      Сейчас вы находитесь в каталоге. Выберите нужную ситуацию, и после этого
+                      можно будет открыть порядок действий.
                     </p>
                   </>
                 )}
@@ -741,7 +761,7 @@ const App = () => {
           <div className="zone-steps">
             <span className="zone-chip is-complete">1. Главная</span>
             <span className="zone-chip is-complete">2. Каталог ситуаций</span>
-            <span className="zone-chip is-active">3. Рабочая зона</span>
+            <span className="zone-chip is-active">3. Порядок действий</span>
           </div>
           <div className="zone-actions">
             <button className="secondary-button" onClick={returnToCatalog}>
@@ -754,11 +774,11 @@ const App = () => {
         </section>
 
         <section className="workspace-entry-card">
-          <span className="eyebrow">Отдельная рабочая зона</span>
+          <span className="eyebrow">Порядок действий</span>
           <h2>{selectedScenario.title}</h2>
           <p>
-            Здесь открыт только маршрут по выбранной ситуации. Чтобы перейти к другой ситуации,
-            сначала вернитесь в каталог.
+            Здесь открыт порядок действий только по выбранной ситуации. Чтобы перейти к другой
+            ситуации, сначала вернитесь в каталог.
           </p>
           {!showQuestionnaire && activeStep ? (
             <div className="workspace-progress-card">
@@ -784,15 +804,15 @@ const App = () => {
         <section className="workspace-section">
           <aside className="workspace-sidebar">
             <div className="sidebar-card scenario-summary">
-              <span className="eyebrow">Выбранный сценарий</span>
+              <span className="eyebrow">Выбранная ситуация</span>
               <h2>{selectedScenario.title}</h2>
               <p>{selectedScenario.intro}</p>
               <div className="summary-line">
-                <span>Шагов в маршруте</span>
+                <span>Шагов в порядке действий</span>
                 <strong>{visibleSteps.length}</strong>
               </div>
               <div className="summary-line">
-                <span>Документов в ветке</span>
+                <span>Документов по ситуации</span>
                 <strong>{visibleRouteTemplates.length}</strong>
               </div>
               <div className="summary-line">
@@ -800,13 +820,13 @@ const App = () => {
                 <strong>{completedIds.length}</strong>
               </div>
               <button className="secondary-button" onClick={resetScenarioProgress}>
-                Сбросить прогресс по сценарию
+                Сбросить прогресс по этой ситуации
               </button>
             </div>
 
             <div className="sidebar-card red-flag-card">
-              <span className="eyebrow">Красные флаги</span>
-              <h3>Что нельзя пропускать</h3>
+              <span className="eyebrow">Критичные моменты</span>
+              <h3>На что обратить особое внимание</h3>
               <ul>
                 {routeRedFlags.map((flag) => (
                   <li key={flag}>{flag}</li>
@@ -816,7 +836,7 @@ const App = () => {
 
             <div className="sidebar-card">
               <span className="eyebrow">Подсказки</span>
-              <h3>Практические ориентиры</h3>
+              <h3>Что важно учесть</h3>
               <ul>
                 {routeTips.map((tip) => (
                   <li key={tip}>{tip}</li>
@@ -826,7 +846,7 @@ const App = () => {
 
             <div className="sidebar-card">
               <span className="eyebrow">Справочные материалы</span>
-              <h3>Что можно открыть рядом</h3>
+              <h3>Что полезно держать под рукой</h3>
               <div className="reference-list">
                 {scenarioReferences.map((resource) => (
                   <ReferenceCard key={resource.id} resource={resource} />
@@ -840,10 +860,10 @@ const App = () => {
               <section className="questionnaire-card">
                 <div className="section-heading compact">
                   <span className="eyebrow">Уточните ситуацию</span>
-                  <h2>Сервис подстроит маршрут под ваши ответы</h2>
+                  <h2>Сервис уточнит порядок действий с учетом ваших ответов</h2>
                   <p>
-                    Этот мини-опрос нужен только для самых рискованных сценариев. Он помогает
-                    поменять шаги, подсказки и рекомендации по документам.
+                    Этот мини-опрос нужен только для самых рискованных ситуаций. Он помогает
+                    уточнить шаги, подсказки и рекомендации по документам.
                   </p>
                 </div>
 
@@ -864,7 +884,7 @@ const App = () => {
                     onClick={buildRoute}
                     disabled={!allQuestionsAnswered}
                   >
-                    Построить маршрут
+                    Сформировать порядок действий
                   </button>
                   <span className="questionnaire-note">
                     Ответы сохранятся в браузере и останутся после обновления страницы.
@@ -919,7 +939,7 @@ const App = () => {
               <>
                 <div className="stepper-card">
                   <div className="section-heading compact">
-                    <span className="eyebrow">Пошаговый маршрут</span>
+                    <span className="eyebrow">Порядок действий</span>
                     <h2>Чек-лист по процедуре</h2>
                   </div>
 
@@ -984,7 +1004,7 @@ const App = () => {
                     </button>
                     <div className="step-navigation-note">
                       <span>Следующее действие</span>
-                      <strong>{nextAction}</strong>
+                      <strong>{stepNavigationHint}</strong>
                     </div>
                     <button
                       className={`primary-button step-next-button ${
@@ -1030,15 +1050,24 @@ const App = () => {
                     </div>
 
                     <div className="document-list">
+                      {!hasCurrentStepTemplates ? (
+                        <div className="empty-documents-state">
+                          <strong>На этом этапе отдельный шаблон не нужен</strong>
+                          <p>
+                            Выполните действия по чек-листу и переходите дальше, когда этот этап
+                            будет завершен.
+                          </p>
+                        </div>
+                      ) : null}
                       {currentStepTemplates.map((template) => {
                         const alreadyTracked = downloadedIds.includes(template.id);
                         const isHighlighted = highlightedTemplateIds.has(template.id);
-                        const templateBadge =
-                          activeStep.templateFile?.id === template.id
-                            ? { label: 'Основной документ этапа', className: 'template-main' }
-                            : isHighlighted
-                              ? { label: 'Рекомендуем для этой ветки', className: 'template-branch' }
-                              : { label: 'Связанный документ', className: 'template-related' };
+                          const templateBadge =
+                            activeStep.templateFile?.id === template.id
+                              ? { label: 'Основной документ этапа', className: 'template-main' }
+                              : isHighlighted
+                                ? { label: 'Особенно важен в этой ситуации', className: 'template-branch' }
+                                : { label: 'Связанный документ', className: 'template-related' };
 
                         return (
                           <div className="document-card" key={template.id}>
@@ -1050,8 +1079,8 @@ const App = () => {
                                 </span>
                                 <span>
                                   {template.isAvailable
-                                    ? 'Шаблон подключен'
-                                    : 'Шаблон будет добавлен'}
+                                    ? 'Шаблон доступен'
+                                    : 'Шаблон пока не загружен'}
                                 </span>
                               </div>
                               {template.isAvailable && template.filePath ? (
@@ -1080,7 +1109,7 @@ const App = () => {
                             <p className="document-note">{template.notes}</p>
                             {alreadyTracked ? (
                               <div className="tracked-chip">
-                                Документ уже открывался в этом сценарии
+                                Этот документ уже открывался
                               </div>
                             ) : null}
                           </div>
@@ -1091,7 +1120,7 @@ const App = () => {
 
                   <section className="result-panel">
                     <div className="section-heading compact">
-                      <span className="eyebrow">Итог по сценарию</span>
+                      <span className="eyebrow">Итог по ситуации</span>
                       <h3>Текущий статус прохождения</h3>
                     </div>
 
@@ -1128,7 +1157,7 @@ const App = () => {
 
         <section className="template-catalog">
           <div className="section-heading">
-            <span className="eyebrow">Библиотека шаблонов</span>
+            <span className="eyebrow">Шаблоны документов</span>
             <h2>Какие документы поддерживает система</h2>
             <p>
               Сейчас структура уже знает, какие `.docx` должны лежать в проекте. Когда вы передадите

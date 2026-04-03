@@ -1127,6 +1127,25 @@ h4 {
   gap: 0.9rem;
 }
 
+.empty-documents-state {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem 1.1rem;
+  border: 1px dashed rgba(39, 81, 156, 0.24);
+  border-radius: 1.2rem;
+  background: rgba(39, 81, 156, 0.04);
+}
+
+.empty-documents-state strong {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.empty-documents-state p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .document-card {
   display: grid;
   gap: 0.9rem;
