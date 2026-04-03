@@ -92,6 +92,10 @@ h4 {
 
 .page-shell--landing {
   min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .page-backdrop {
@@ -1343,12 +1347,6 @@ h4 {
 }
 
 @media (max-width: 760px) {
-  .page-shell--landing {
-    max-height: 100vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
   .hero,
   .layout {
     padding-left: max(1rem, env(safe-area-inset-left));
