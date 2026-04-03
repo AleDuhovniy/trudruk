@@ -32,11 +32,13 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   min-width: 320px;
+  overflow-x: hidden;
   font-family: var(--font-body);
   background:
     radial-gradient(circle at top left, rgba(39, 81, 156, 0.1), transparent 26%),
@@ -458,6 +460,7 @@ h4 {
 
 .workspace-progress-meta strong {
   max-width: 28ch;
+  line-height: 1.35;
 }
 
 .workspace-progress-bar {
@@ -594,6 +597,7 @@ h4 {
   font-family: var(--font-display);
   font-size: 1.2rem;
   letter-spacing: -0.02em;
+  line-height: 1.05;
 }
 
 .scenario-card p,
@@ -698,6 +702,7 @@ h4 {
   flex: 1;
   display: grid;
   gap: 1.15rem;
+  min-width: 0;
 }
 
 .sidebar-card,
@@ -940,6 +945,18 @@ h4 {
     box-shadow 0.2s ease;
 }
 
+.stepper-item > div {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.stepper-item strong,
+.document-header strong,
+.answer-chip strong {
+  overflow-wrap: anywhere;
+}
+
 .stepper-item.is-current {
   border-color: rgba(39, 81, 156, 0.32);
   background: rgba(39, 81, 156, 0.08);
@@ -1027,6 +1044,7 @@ h4 {
   margin-top: 0.5rem;
   max-width: 60ch;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .check-toggle {
@@ -1180,6 +1198,7 @@ h4 {
 
 .result-card strong {
   font-size: 1.2rem;
+  line-height: 1.2;
 }
 
 .final-reminder {
@@ -1268,19 +1287,223 @@ h4 {
   }
 }
 
+@media (max-width: 920px) {
+  .hero {
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .hero-copy,
+  .hero-panel {
+    max-width: none;
+  }
+
+  .hero h1 {
+    max-width: 11ch;
+    font-size: clamp(2rem, 9vw, 3.15rem);
+  }
+
+  .hero p {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .hero-actions {
+    align-items: stretch;
+  }
+
+  .hero-note {
+    max-width: none;
+  }
+
+  .zone-bar,
+  .workspace-entry-card,
+  .catalog-preview-card {
+    padding: 0.95rem 1rem;
+    border-radius: 1.3rem;
+  }
+
+  .workspace-progress-top {
+    align-items: start;
+  }
+
+  .workspace-progress-meta {
+    text-align: left;
+  }
+
+  .scenario-card,
+  .sidebar-card,
+  .stepper-card,
+  .step-detail-card,
+  .questionnaire-card,
+  .route-outcome-card,
+  .template-tile {
+    border-radius: 1.45rem;
+  }
+}
+
 @media (max-width: 760px) {
+  .page-shell--landing {
+    max-height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .hero,
   .layout {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
   }
 
   .hero {
-    padding-top: 2.5rem;
+    min-height: auto;
+    padding-top: max(1.25rem, env(safe-area-inset-top));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .layout {
+    gap: 1.4rem;
+    padding-bottom: 3rem;
+  }
+
+  .hero h1 {
+    max-width: 10.5ch;
+    font-size: clamp(1.95rem, 10vw, 2.75rem);
+    line-height: 1.02;
+  }
+
+  .hero p,
+  .hero-info-item p,
+  .metric-card span,
+  .section-heading p,
+  .catalog-preview-card p,
+  .workspace-entry-card p,
+  .route-outcome-body p,
+  .question-head p,
+  .document-note,
+  .final-reminder p {
+    font-size: 0.96rem;
+    line-height: 1.58;
   }
 
   .hero-dashboard {
     grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-info-card,
+  .metric-card,
+  .catalog-preview-card,
+  .workspace-entry-card,
+  .sidebar-card,
+  .stepper-card,
+  .step-detail-card,
+  .questionnaire-card,
+  .route-outcome-card,
+  .question-block,
+  .reference-card,
+  .detail-panel,
+  .document-card,
+  .result-card,
+  .final-reminder,
+  .template-tile {
+    padding: 1rem;
+    border-radius: 1.15rem;
+  }
+
+  .zone-bar {
+    padding: 0.85rem;
+  }
+
+  .zone-steps,
+  .catalog-flow {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .zone-steps::-webkit-scrollbar,
+  .catalog-flow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .zone-chip,
+  .flow-step {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    scroll-snap-align: start;
+  }
+
+  .zone-actions {
+    width: 100%;
+    gap: 0.6rem;
+  }
+
+  .catalog-stage-layout,
+  .workspace-section,
+  .workspace-main,
+  .template-catalog {
+    gap: 1rem;
+  }
+
+  .scenario-grid {
+    gap: 0.8rem;
+  }
+
+  .scenario-card {
+    gap: 0.8rem;
+    padding: 1rem;
+    border-radius: 1.2rem;
+  }
+
+  .scenario-card h3 {
+    font-size: 1.08rem;
+  }
+
+  .scenario-card ul {
+    padding-left: 1rem;
+  }
+
+  .scenario-short,
+  .risk-pill,
+  .signal-pill,
+  .template-status,
+  .tracked-chip,
+  .pending-chip {
+    font-size: 0.74rem;
+  }
+
+  .scenario-select {
+    min-width: 0;
+    padding-inline: 0.85rem;
+    font-size: 0.82rem;
+  }
+
+  .workspace-progress-card {
+    padding: 0.9rem;
+  }
+
+  .workspace-progress-bar {
+    height: 0.7rem;
+  }
+
+  .workspace-progress-meta strong {
+    max-width: none;
+  }
+
+  .workspace-sidebar {
+    gap: 0.8rem;
   }
 
   .step-detail-header,
@@ -1310,7 +1533,8 @@ h4 {
 
   .check-toggle {
     width: 100%;
-    justify-content: center;
+    justify-content: flex-start;
+    padding: 0.85rem 0.95rem;
   }
 
   .primary-button,
@@ -1318,5 +1542,148 @@ h4 {
   .download-link {
     width: 100%;
     justify-content: center;
+  }
+
+  .stepper-item {
+    padding: 0.8rem;
+    border-radius: 1rem;
+  }
+
+  .step-index {
+    width: 1.85rem;
+    height: 1.85rem;
+  }
+
+  .step-navigation-note {
+    padding: 0.85rem 0.95rem;
+  }
+
+  .step-next-button {
+    min-width: 0;
+    min-height: 3rem;
+    padding-inline: 1rem;
+  }
+
+  .law-basis {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .document-guide ul,
+  .detail-panel ul,
+  .sidebar-card ul {
+    gap: 0.55rem;
+  }
+
+  .template-grid {
+    gap: 0.8rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .eyebrow {
+    margin-bottom: 0.8rem;
+    font-size: 0.67rem;
+    letter-spacing: 0.12em;
+  }
+
+  .hero h1 {
+    max-width: 10ch;
+    font-size: clamp(1.8rem, 11vw, 2.35rem);
+  }
+
+  .hero-actions {
+    margin-top: 1.4rem;
+  }
+
+  .hero-info-card,
+  .metric-card,
+  .catalog-preview-card,
+  .workspace-entry-card,
+  .sidebar-card,
+  .stepper-card,
+  .step-detail-card,
+  .questionnaire-card,
+  .route-outcome-card,
+  .question-block,
+  .reference-card,
+  .detail-panel,
+  .document-card,
+  .result-card,
+  .final-reminder,
+  .template-tile {
+    padding: 0.95rem;
+  }
+
+  .metric-card strong {
+    font-size: 1.9rem;
+  }
+
+  .zone-bar,
+  .workspace-entry-card,
+  .catalog-preview-card {
+    padding: 0.8rem;
+    border-radius: 1.1rem;
+  }
+
+  .catalog-stage-header h2,
+  .workspace-entry-card h2,
+  .section-heading h2,
+  .route-outcome-top h2,
+  .step-detail-header h2 {
+    font-size: 1.24rem;
+  }
+
+  .section-heading.compact h2,
+  .section-heading.compact h3,
+  .catalog-preview-card h3,
+  .sidebar-card h2,
+  .sidebar-card h3,
+  .question-head h3,
+  .result-card strong,
+  .final-reminder strong {
+    font-size: 1.08rem;
+  }
+
+  .summary-line {
+    padding: 0.65rem 0;
+  }
+
+  .scenario-card-top,
+  .scenario-card-footer {
+    gap: 0.65rem;
+  }
+
+  .scenario-select {
+    width: 100%;
+  }
+
+  .workspace-progress-top strong {
+    font-size: 1rem;
+  }
+
+  .workspace-progress-meta strong,
+  .step-navigation-note strong {
+    font-size: 0.96rem;
+  }
+
+  .question-block,
+  .option-card {
+    padding: 0.9rem;
+  }
+
+  .step-index {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.95rem;
+  }
+
+  .check-toggle,
+  .step-navigation-note {
+    padding: 0.8rem 0.9rem;
+  }
+
+  .download-link {
+    min-height: 2.9rem;
   }
 }
