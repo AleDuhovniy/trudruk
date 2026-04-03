@@ -141,6 +141,29 @@ const legalBasisItems = [
 
 type AppStage = 'landing' | 'catalog' | 'workspace';
 
+type ResultDocumentSnapshot = {
+  id: string;
+  title: string;
+  isAvailable: boolean;
+  isOpened: boolean;
+};
+
+type ResultSnapshot = {
+  statusTitle: string;
+  statusText: string;
+  completionPercent: number;
+  completedSteps: number;
+  totalSteps: number;
+  totalTemplates: number;
+  openedTemplates: number;
+  availableTemplates: number;
+  nextAction: string;
+  lastUpdatedLabel: string;
+  documentSummary: string;
+  pendingTemplateCount: number;
+  templates: ResultDocumentSnapshot[];
+};
+
 const App = () => {
   const [appStage, setAppStage] = useState<AppStage>('landing');
   const [catalogScenarioId, setCatalogScenarioId] = useState<string | null>(null);
@@ -150,6 +173,9 @@ const App = () => {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isEditingAnswers, setIsEditingAnswers] = useState(false);
   const [shouldScrollToCurrentStep, setShouldScrollToCurrentStep] = useState(false);
+  const [isResultsStageOpen, setIsResultsStageOpen] = useState(false);
+  const [shouldScrollToResults, setShouldScrollToResults] = useState(false);
+  const [resultSnapshot, setResultSnapshot] = useState<ResultSnapshot | null>(null);
 
   useEffect(() => {
     const stored = loadProgress();
@@ -346,6 +372,12 @@ const App = () => {
     (!allQuestionsAnswered || isEditingAnswers || !scenarioProgress.questionnaireCompleted);
 
   useEffect(() => {
+    setIsResultsStageOpen(false);
+    setShouldScrollToResults(false);
+    setResultSnapshot(null);
+  }, [selectedScenario.id, appStage]);
+
+  useEffect(() => {
     if (!shouldScrollToCurrentStep || appStage !== 'workspace' || showQuestionnaire) {
       return;
     }
@@ -360,6 +392,22 @@ const App = () => {
 
     return () => window.cancelAnimationFrame(frameId);
   }, [appStage, shouldScrollToCurrentStep, showQuestionnaire]);
+
+  useEffect(() => {
+    if (!shouldScrollToResults || appStage !== 'workspace' || showQuestionnaire) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      document.getElementById('results-panel')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+      setShouldScrollToResults(false);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [appStage, shouldScrollToResults, showQuestionnaire]);
 
   const catalogProgress = useMemo(
     () => (catalogScenario ? getProgressForScenario(progressState, catalogScenario.id) : emptyScenarioProgress()),
@@ -450,6 +498,7 @@ const App = () => {
     });
     setIsEditingAnswers(false);
     setActiveStepIndex(0);
+    setIsResultsStageOpen(false);
   };
 
   const trackDownload = (template: TemplateResource) => {
@@ -485,6 +534,7 @@ const App = () => {
     }));
     setActiveStepIndex(0);
     setIsEditingAnswers(branchQuestions.length > 0);
+    setIsResultsStageOpen(false);
   };
 
   const answerSummary = branchQuestions
@@ -509,21 +559,27 @@ const App = () => {
       : visibleSteps[getFirstOpenStepIndex(visibleSteps, completedIds)]?.title ?? 'Заполните опрос';
   const scenarioCompletionPercent = getCompletionPercent(visibleSteps, completedIds);
   const currentStepNumber = activeStep ? activeStepIndex + 1 : 0;
+  const isOnLastStep = visibleSteps.length > 0 && activeStepIndex === visibleSteps.length - 1;
   const canGoToPreviousStep = activeStepIndex > 0;
   const canGoToNextStep =
     activeStepIndex < visibleSteps.length - 1 &&
     isStepUnlocked(visibleSteps, activeStepIndex + 1, completedIds);
   const isCurrentStepCompleted = activeStep ? completedIds.includes(activeStep.id) : false;
-  const shouldHighlightNextStep = isCurrentStepCompleted && canGoToNextStep;
+  const canOpenResults = isOnLastStep && isCurrentStepCompleted;
+  const shouldHighlightNextStep = isCurrentStepCompleted && (canGoToNextStep || canOpenResults);
   const stepNavigationLabel =
-    completedIds.length === visibleSteps.length
-      ? 'Статус процедуры'
+    canOpenResults
+      ? 'Завершение работы'
+      : completedIds.length === visibleSteps.length
+        ? 'Статус процедуры'
       : isCurrentStepCompleted
         ? 'Следующий шаг'
         : 'Что нужно сделать';
   const stepNavigationHint =
-    completedIds.length === visibleSteps.length
-      ? 'Все этапы уже отмечены как выполненные.'
+    canOpenResults
+      ? 'Последний этап завершен. Теперь можно перейти к итогам по ситуации.'
+      : completedIds.length === visibleSteps.length
+        ? 'Все этапы уже отмечены как выполненные.'
       : isCurrentStepCompleted
         ? nextAction
         : 'Сначала отметьте текущий этап как выполненный.';
@@ -549,6 +605,26 @@ const App = () => {
       ? `${openedRouteTemplates.length} из ${visibleRouteTemplates.length} документов уже открыты`
       : 'По этой ситуации нет отдельных шаблонов документов';
   const lastUpdatedLabel = formatUpdatedAt(scenarioProgress.updatedAt);
+  const resultView = resultSnapshot ?? {
+    statusTitle: resultStatusTitle,
+    statusText: resultStatusText,
+    completionPercent: scenarioCompletionPercent,
+    completedSteps: completedIds.length,
+    totalSteps: visibleSteps.length,
+    totalTemplates: visibleRouteTemplates.length,
+    openedTemplates: openedRouteTemplates.length,
+    availableTemplates: availableRouteTemplates.length,
+    nextAction,
+    lastUpdatedLabel,
+    documentSummary: resultDocumentSummary,
+    pendingTemplateCount: pendingRouteTemplates.length,
+    templates: visibleRouteTemplates.map((template) => ({
+      id: template.id,
+      title: template.title,
+      isAvailable: Boolean(template.isAvailable && template.filePath),
+      isOpened: downloadedIds.includes(template.id),
+    })),
+  };
 
   const openCatalog = () => {
     setCatalogScenarioId(null);
@@ -568,6 +644,7 @@ const App = () => {
 
     setSelectedScenarioId(catalogScenarioId);
     setActiveStepIndex(0);
+    setIsResultsStageOpen(false);
     setAppStage('workspace');
     window.scrollTo({ top: 0, behavior: 'auto' });
   };
@@ -583,6 +660,7 @@ const App = () => {
       return;
     }
 
+    setIsResultsStageOpen(false);
     setShouldScrollToCurrentStep(true);
     setActiveStepIndex((current) => Math.max(0, current - 1));
   };
@@ -592,8 +670,49 @@ const App = () => {
       return;
     }
 
+    setIsResultsStageOpen(false);
     setShouldScrollToCurrentStep(true);
     setActiveStepIndex((current) => Math.min(visibleSteps.length - 1, current + 1));
+  };
+
+  const openResultsStage = () => {
+    if (!canOpenResults) {
+      return;
+    }
+
+    setResultSnapshot({
+      statusTitle: resultStatusTitle,
+      statusText: resultStatusText,
+      completionPercent: scenarioCompletionPercent,
+      completedSteps: completedIds.length,
+      totalSteps: visibleSteps.length,
+      totalTemplates: visibleRouteTemplates.length,
+      openedTemplates: openedRouteTemplates.length,
+      availableTemplates: availableRouteTemplates.length,
+      nextAction,
+      lastUpdatedLabel,
+      documentSummary: resultDocumentSummary,
+      pendingTemplateCount: pendingRouteTemplates.length,
+      templates: visibleRouteTemplates.map((template) => ({
+        id: template.id,
+        title: template.title,
+        isAvailable: Boolean(template.isAvailable && template.filePath),
+        isOpened: downloadedIds.includes(template.id),
+      })),
+    });
+    setProgressState((current) => ({
+      ...current,
+      [selectedScenario.id]: emptyScenarioProgress(),
+    }));
+    setActiveStepIndex(0);
+    setIsResultsStageOpen(true);
+    setShouldScrollToResults(true);
+  };
+
+  const returnToStepsFromResults = () => {
+    setIsResultsStageOpen(false);
+    setResultSnapshot(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -971,8 +1090,9 @@ const App = () => {
               </section>
             ) : null}
 
-            {!showQuestionnaire && activeStep ? (
+            {((!showQuestionnaire && activeStep) || isResultsStageOpen) ? (
               <>
+                {!isResultsStageOpen ? (
                 <div className="stepper-card">
                   <div className="section-heading compact">
                     <span className="eyebrow">Порядок действий</span>
@@ -995,6 +1115,7 @@ const App = () => {
                               return;
                             }
 
+                            setIsResultsStageOpen(false);
                             setShouldScrollToCurrentStep(true);
                             setActiveStepIndex(index);
                           }}
@@ -1010,8 +1131,11 @@ const App = () => {
                     })}
                   </div>
                 </div>
+                ) : null}
 
                 <article className="step-detail-card" id="current-step-card">
+                  {!isResultsStageOpen && activeStep ? (
+                    <>
                   <div className="step-detail-header">
                     <div>
                       <span className="eyebrow">Текущий этап</span>
@@ -1022,9 +1146,13 @@ const App = () => {
                       <input
                         type="checkbox"
                         checked={completedIds.includes(activeStep.id)}
-                        onChange={(event) =>
-                          markStep(selectedScenario.id, activeStep.id, event.target.checked)
-                        }
+                        onChange={(event) => {
+                          if (!event.target.checked) {
+                            setIsResultsStageOpen(false);
+                          }
+
+                          markStep(selectedScenario.id, activeStep.id, event.target.checked);
+                        }}
                       />
                       <span>Этап выполнен</span>
                     </label>
@@ -1039,20 +1167,24 @@ const App = () => {
                       Предыдущий шаг
                     </button>
                     <div className="step-navigation-note">
-                      <span>Следующее действие</span>
+                      <span>{stepNavigationLabel}</span>
                       <strong>{stepNavigationHint}</strong>
                     </div>
                     <button
                       className={`primary-button step-next-button ${
                         shouldHighlightNextStep ? 'step-next-button--highlighted' : ''
                       }`}
-                      onClick={goToNextStep}
-                      disabled={!canGoToNextStep}
+                      onClick={canOpenResults ? openResultsStage : goToNextStep}
+                      disabled={!(canGoToNextStep || canOpenResults)}
                     >
-                      Следующий шаг
+                      {canOpenResults ? 'Перейти к итогам' : 'Следующий шаг'}
                     </button>
                   </div>
+                    </>
+                  ) : null}
 
+                  {!isResultsStageOpen ? (
+                    <>
                   <div className="detail-grid">
                     <section className="detail-panel">
                       <h3>Что сделать на этом шаге</h3>
@@ -1153,51 +1285,61 @@ const App = () => {
                       })}
                     </div>
                   </section>
+                    </>
+                  ) : null}
 
-                  <section className="result-panel">
+                  {isResultsStageOpen ? (
+                  <section className="result-panel" id="results-panel">
                     <div className="section-heading compact">
                       <span className="eyebrow">Итог по ситуации</span>
-                      <h3>{resultStatusTitle}</h3>
+                      <h3>{resultView.statusTitle}</h3>
                     </div>
 
-                    <div className={`result-status-card ${completedAllSteps ? 'is-complete' : ''}`}>
+                    <div className="result-stage-actions">
+                      <span>Проверка этапов завершена. Ниже собран итог по процедуре и комплекту материалов.</span>
+                      <button className="secondary-button" onClick={returnToStepsFromResults}>
+                        Начать заново
+                      </button>
+                    </div>
+
+                    <div className={`result-status-card ${resultView.completionPercent === 100 ? 'is-complete' : ''}`}>
                       <div>
                         <span className="result-status-label">Статус процедуры</span>
-                        <strong>{completedAllSteps ? 'Завершена' : 'В работе'}</strong>
+                        <strong>{resultView.completionPercent === 100 ? 'Завершена' : 'В работе'}</strong>
                       </div>
-                      <p>{resultStatusText}</p>
+                      <p>{resultView.statusText}</p>
                     </div>
 
                     <div className="result-grid">
                       <div className="result-card">
                         <span>Готовность процедуры</span>
-                        <strong>{scenarioCompletionPercent}%</strong>
+                        <strong>{resultView.completionPercent}%</strong>
                       </div>
                       <div className="result-card">
                         <span>Пройдено шагов</span>
                         <strong>
-                          {completedIds.length} из {visibleSteps.length}
+                          {resultView.completedSteps} из {resultView.totalSteps}
                         </strong>
                       </div>
                       <div className="result-card">
                         <span>Документов в комплекте</span>
-                        <strong>{visibleRouteTemplates.length}</strong>
+                        <strong>{resultView.totalTemplates}</strong>
                       </div>
                       <div className="result-card">
                         <span>Открыто документов</span>
-                        <strong>{openedRouteTemplates.length}</strong>
+                        <strong>{resultView.openedTemplates}</strong>
                       </div>
                       <div className="result-card">
                         <span>Шаблонов готово к скачиванию</span>
-                        <strong>{availableRouteTemplates.length}</strong>
+                        <strong>{resultView.availableTemplates}</strong>
                       </div>
                       <div className="result-card">
                         <span>Последнее обновление</span>
-                        <strong>{lastUpdatedLabel}</strong>
+                        <strong>{resultView.lastUpdatedLabel}</strong>
                       </div>
                       <div className="result-card result-card--wide">
                         <span>Следующее действие</span>
-                        <strong>{nextAction}</strong>
+                        <strong>{resultView.nextAction}</strong>
                       </div>
                     </div>
 
@@ -1206,18 +1348,17 @@ const App = () => {
                         <span className="eyebrow">Итоговый комплект</span>
                         <h3>Какие документы входят в материалы по ситуации</h3>
                       </div>
-                      <p className="result-documents-lead">{resultDocumentSummary}</p>
+                      <p className="result-documents-lead">{resultView.documentSummary}</p>
 
-                      {visibleRouteTemplates.length > 0 ? (
+                      {resultView.templates.length > 0 ? (
                         <div className="result-documents-list">
-                          {visibleRouteTemplates.map((template) => {
-                            const isOpened = downloadedIds.includes(template.id);
-                            const status = !template.isAvailable || !template.filePath
+                          {resultView.templates.map((template) => {
+                            const status = !template.isAvailable
                               ? {
                                   label: 'Шаблон пока не загружен',
                                   className: 'is-pending',
                                 }
-                              : isOpened
+                              : template.isOpened
                                 ? {
                                     label: 'Документ уже открыт',
                                     className: 'is-ready',
@@ -1254,11 +1395,11 @@ const App = () => {
                         </div>
                       )}
 
-                      {pendingRouteTemplates.length > 0 ? (
+                      {resultView.pendingTemplateCount > 0 ? (
                         <div className="final-reminder final-reminder--soft">
                           <strong>Что ещё нужно для полного комплекта</strong>
                           <p>
-                            В этой ситуации пока не загружено {pendingRouteTemplates.length}{' '}
+                            В этой ситуации пока не загружено {resultView.pendingTemplateCount}{' '}
                             шаблонов. Их можно добавить позже в библиотеку, чтобы комплект был
                             полностью готов к работе.
                           </p>
@@ -1274,6 +1415,7 @@ const App = () => {
                       </p>
                     </div>
                   </section>
+                  ) : null}
                 </article>
               </>
             ) : null}
