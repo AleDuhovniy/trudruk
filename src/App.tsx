@@ -81,6 +81,21 @@ const getCompletionPercent = (steps: Step[], completedIds: string[]) => {
   return Math.round((completedIds.length / steps.length) * 100);
 };
 
+const formatUpdatedAt = (value: string) => {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return 'без даты';
+  }
+
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(parsed);
+};
+
 const getFirstOpenStepIndex = (steps: Step[], completedIds: string[]) => {
   if (steps.length === 0) {
     return 0;
@@ -513,6 +528,27 @@ const App = () => {
         ? nextAction
         : 'Сначала отметьте текущий этап как выполненный.';
   const hasCurrentStepTemplates = currentStepTemplates.length > 0;
+  const completedAllSteps = completedIds.length === visibleSteps.length && visibleSteps.length > 0;
+  const availableRouteTemplates = visibleRouteTemplates.filter(
+    (template) => template.isAvailable && template.filePath,
+  );
+  const openedRouteTemplates = visibleRouteTemplates.filter((template) =>
+    downloadedIds.includes(template.id),
+  );
+  const pendingRouteTemplates = visibleRouteTemplates.filter(
+    (template) => !template.isAvailable || !template.filePath,
+  );
+  const resultStatusTitle = completedAllSteps
+    ? 'Процедура по ситуации завершена'
+    : 'Процедура находится в работе';
+  const resultStatusText = completedAllSteps
+    ? 'Все этапы отмечены как выполненные. Теперь удобно проверить итоговый комплект документов и зафиксировать, что материалы по ситуации собраны полностью.'
+    : 'По ситуации уже собрана часть материалов. Перед завершением удобно сверить оставшиеся шаги, документы и статус подготовки файлов.';
+  const resultDocumentSummary =
+    visibleRouteTemplates.length > 0
+      ? `${openedRouteTemplates.length} из ${visibleRouteTemplates.length} документов уже открыты`
+      : 'По этой ситуации нет отдельных шаблонов документов';
+  const lastUpdatedLabel = formatUpdatedAt(scenarioProgress.updatedAt);
 
   const openCatalog = () => {
     setCatalogScenarioId(null);
@@ -1121,10 +1157,22 @@ const App = () => {
                   <section className="result-panel">
                     <div className="section-heading compact">
                       <span className="eyebrow">Итог по ситуации</span>
-                      <h3>Текущий статус прохождения</h3>
+                      <h3>{resultStatusTitle}</h3>
+                    </div>
+
+                    <div className={`result-status-card ${completedAllSteps ? 'is-complete' : ''}`}>
+                      <div>
+                        <span className="result-status-label">Статус процедуры</span>
+                        <strong>{completedAllSteps ? 'Завершена' : 'В работе'}</strong>
+                      </div>
+                      <p>{resultStatusText}</p>
                     </div>
 
                     <div className="result-grid">
+                      <div className="result-card">
+                        <span>Готовность процедуры</span>
+                        <strong>{scenarioCompletionPercent}%</strong>
+                      </div>
                       <div className="result-card">
                         <span>Пройдено шагов</span>
                         <strong>
@@ -1132,13 +1180,90 @@ const App = () => {
                         </strong>
                       </div>
                       <div className="result-card">
-                        <span>Отмечено документов</span>
-                        <strong>{downloadedIds.length}</strong>
+                        <span>Документов в комплекте</span>
+                        <strong>{visibleRouteTemplates.length}</strong>
                       </div>
                       <div className="result-card">
+                        <span>Открыто документов</span>
+                        <strong>{openedRouteTemplates.length}</strong>
+                      </div>
+                      <div className="result-card">
+                        <span>Шаблонов готово к скачиванию</span>
+                        <strong>{availableRouteTemplates.length}</strong>
+                      </div>
+                      <div className="result-card">
+                        <span>Последнее обновление</span>
+                        <strong>{lastUpdatedLabel}</strong>
+                      </div>
+                      <div className="result-card result-card--wide">
                         <span>Следующее действие</span>
                         <strong>{nextAction}</strong>
                       </div>
+                    </div>
+
+                    <div className="result-documents-card">
+                      <div className="section-heading compact">
+                        <span className="eyebrow">Итоговый комплект</span>
+                        <h3>Какие документы входят в материалы по ситуации</h3>
+                      </div>
+                      <p className="result-documents-lead">{resultDocumentSummary}</p>
+
+                      {visibleRouteTemplates.length > 0 ? (
+                        <div className="result-documents-list">
+                          {visibleRouteTemplates.map((template) => {
+                            const isOpened = downloadedIds.includes(template.id);
+                            const status = !template.isAvailable || !template.filePath
+                              ? {
+                                  label: 'Шаблон пока не загружен',
+                                  className: 'is-pending',
+                                }
+                              : isOpened
+                                ? {
+                                    label: 'Документ уже открыт',
+                                    className: 'is-ready',
+                                  }
+                                : {
+                                    label: 'Документ ещё не открыт',
+                                    className: 'is-waiting',
+                                  };
+
+                            return (
+                              <div className="result-document-item" key={template.id}>
+                                <div>
+                                  <strong>{template.title}</strong>
+                                  <span>
+                                    {template.isAvailable
+                                      ? 'Входит в комплект по этой ситуации'
+                                      : 'Файл нужно добавить в библиотеку шаблонов'}
+                                  </span>
+                                </div>
+                                <span className={`result-document-status ${status.className}`}>
+                                  {status.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="empty-documents-state">
+                          <strong>Отдельный комплект файлов по этой ситуации не требуется</strong>
+                          <p>
+                            Основной результат здесь формируется за счёт прохождения этапов и
+                            оформления внутренних материалов работодателя.
+                          </p>
+                        </div>
+                      )}
+
+                      {pendingRouteTemplates.length > 0 ? (
+                        <div className="final-reminder final-reminder--soft">
+                          <strong>Что ещё нужно для полного комплекта</strong>
+                          <p>
+                            В этой ситуации пока не загружено {pendingRouteTemplates.length}{' '}
+                            шаблонов. Их можно добавить позже в библиотеку, чтобы комплект был
+                            полностью готов к работе.
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="final-reminder">
