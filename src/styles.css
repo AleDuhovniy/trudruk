@@ -236,26 +236,78 @@ h4 {
 
 .primary-button,
 .secondary-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-radius: 999px;
   padding: 0.95rem 1.4rem;
   font-weight: 700;
+  overflow: hidden;
+  isolation: isolate;
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease;
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.28s ease,
+    border-color 0.28s ease,
+    color 0.28s ease;
+}
+
+.primary-button::before,
+.secondary-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.32s ease,
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .primary-button {
   background: linear-gradient(135deg, #27519c, #1f437f);
   color: #ffffff;
-  box-shadow: 0 14px 30px rgba(39, 81, 156, 0.24);
+  box-shadow:
+    0 18px 38px rgba(39, 81, 156, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.primary-button::before {
+  background:
+    linear-gradient(
+      115deg,
+      transparent 18%,
+      rgba(255, 255, 255, 0.08) 34%,
+      rgba(255, 255, 255, 0.42) 50%,
+      rgba(255, 255, 255, 0.1) 66%,
+      transparent 82%
+    );
+  transform: translateX(-135%);
 }
 
 .secondary-button {
   background: rgba(255, 255, 255, 0.96);
   color: var(--text);
   border: 1px solid var(--line);
+  box-shadow:
+    0 10px 24px rgba(16, 24, 40, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.secondary-button::before {
+  background:
+    linear-gradient(
+      115deg,
+      transparent 22%,
+      rgba(39, 81, 156, 0.02) 38%,
+      rgba(39, 81, 156, 0.14) 50%,
+      rgba(39, 81, 156, 0.02) 62%,
+      transparent 78%
+    );
+  transform: translateX(-140%);
 }
 
 .primary-button:hover,
@@ -264,6 +316,51 @@ h4 {
 .stepper-item:hover,
 .download-link:hover {
   transform: translateY(-2px);
+}
+
+.primary-button:hover,
+.primary-button:focus-visible {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow:
+    0 24px 48px rgba(39, 81, 156, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.primary-button:hover::before,
+.primary-button:focus-visible::before,
+.secondary-button:hover::before,
+.secondary-button:focus-visible::before {
+  opacity: 1;
+  transform: translateX(135%);
+}
+
+.secondary-button:hover,
+.secondary-button:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(39, 81, 156, 0.2);
+  color: var(--brand-blue);
+  box-shadow:
+    0 16px 34px rgba(16, 24, 40, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.primary-button:focus-visible,
+.secondary-button:focus-visible {
+  outline: none;
+}
+
+.primary-button:focus-visible {
+  box-shadow:
+    0 0 0 4px rgba(39, 81, 156, 0.12),
+    0 24px 48px rgba(39, 81, 156, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.secondary-button:focus-visible {
+  box-shadow:
+    0 0 0 4px rgba(39, 81, 156, 0.1),
+    0 16px 34px rgba(16, 24, 40, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
 .hero-panel {
@@ -1026,7 +1123,9 @@ h4 {
   min-height: 3.25rem;
   padding-inline: 1.7rem;
   font-size: 1rem;
-  box-shadow: 0 16px 32px rgba(39, 81, 156, 0.28);
+  box-shadow:
+    0 20px 40px rgba(39, 81, 156, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .step-next-button:hover {
@@ -1034,7 +1133,7 @@ h4 {
 }
 
 .step-next-button--highlighted {
-  animation: nextStepPulse 1.8s ease-in-out infinite;
+  animation: nextStepPulse 2.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
 .step-detail-header {
@@ -1275,15 +1374,38 @@ h4 {
   0%,
   100% {
     box-shadow:
-      0 16px 32px rgba(39, 81, 156, 0.28),
-      0 0 0 0 rgba(39, 81, 156, 0.16);
+      0 20px 40px rgba(39, 81, 156, 0.28),
+      0 0 0 0 rgba(39, 81, 156, 0.1);
     transform: translateY(0) scale(1);
   }
-  50% {
+  40% {
     box-shadow:
-      0 18px 36px rgba(39, 81, 156, 0.34),
-      0 0 0 10px rgba(39, 81, 156, 0);
-    transform: translateY(-1px) scale(1.015);
+      0 26px 50px rgba(39, 81, 156, 0.34),
+      0 0 0 14px rgba(39, 81, 156, 0);
+    transform: translateY(-2px) scale(1.02);
+  }
+  70% {
+    box-shadow:
+      0 22px 42px rgba(39, 81, 156, 0.3),
+      0 0 0 6px rgba(39, 81, 156, 0);
+    transform: translateY(-1px) scale(1.01);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary-button,
+  .secondary-button,
+  .scenario-card,
+  .stepper-item,
+  .download-link,
+  .step-next-button--highlighted {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .primary-button::before,
+  .secondary-button::before {
+    display: none;
   }
 }
 
