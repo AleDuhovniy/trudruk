@@ -1165,7 +1165,10 @@ const App = () => {
                 </div>
 
                 <div className="route-outcome-actions">
-                  <button className="secondary-button" onClick={() => setIsEditingAnswers(true)}>
+                  <button
+                    className="secondary-button secondary-button--quiet"
+                    onClick={() => setIsEditingAnswers(true)}
+                  >
                     Изменить ответы
                   </button>
                 </div>

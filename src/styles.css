@@ -595,6 +595,10 @@ h4 {
   line-height: 1.6;
 }
 
+.route-outcome-actions .secondary-button--quiet {
+  width: auto;
+}
+
 .zone-actions .primary-button,
 .zone-actions .secondary-button,
 .workspace-quick-actions .primary-button,
@@ -1685,7 +1689,7 @@ h4 {
   .layout {
     gap: 1.4rem;
     padding-top: max(0.9rem, env(safe-area-inset-top));
-    padding-bottom: 3rem;
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
   }
 
   .hero h1 {
@@ -1750,6 +1754,11 @@ h4 {
   .workspace-main,
   .template-catalog {
     gap: 1rem;
+  }
+
+  .workspace-main {
+    display: flex;
+    flex-direction: column;
   }
 
   .scenario-grid {
@@ -1821,9 +1830,8 @@ h4 {
   }
 
   .stepper-list {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(16rem, 84vw);
+    display: flex;
+    gap: 0.65rem;
     overflow-x: auto;
     padding-bottom: 0.25rem;
     scrollbar-width: none;
@@ -1849,6 +1857,31 @@ h4 {
   .route-outcome-actions {
     flex-direction: column;
     align-items: start;
+  }
+
+  .route-outcome-card {
+    order: 1;
+  }
+
+  .step-detail-card {
+    order: 2;
+  }
+
+  .stepper-card {
+    order: 3;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .stepper-card .section-heading {
+    margin-bottom: 0.5rem;
+    padding: 0 0.15rem;
+  }
+
+  .stepper-card .section-heading h2 {
+    font-size: 1.1rem;
   }
 
   .step-navigation {
@@ -1880,11 +1913,48 @@ h4 {
     justify-content: center;
   }
 
+  .route-outcome-actions .secondary-button--quiet {
+    width: auto;
+    min-height: auto;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    color: var(--brand-blue);
+    justify-content: flex-start;
+  }
+
+  .route-outcome-actions .secondary-button--quiet::before {
+    display: none;
+  }
+
   .stepper-item {
-    padding: 0.8rem;
+    flex: 0 0 min(78vw, 15rem);
+    min-height: 0;
+    padding: 0.8rem 0.85rem;
     border-radius: 1rem;
-    min-height: 100%;
     scroll-snap-align: start;
+  }
+
+  .stepper-item > div {
+    gap: 0.15rem;
+  }
+
+  .stepper-item span:not(.step-index) {
+    display: none;
+  }
+
+  .stepper-item strong {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    font-size: 0.95rem;
+    line-height: 1.3;
+  }
+
+  .stepper-item.is-current {
+    box-shadow: 0 10px 20px rgba(39, 81, 156, 0.12);
   }
 
   .step-index {
@@ -1915,6 +1985,10 @@ h4 {
 
   .template-grid {
     gap: 0.8rem;
+  }
+
+  .template-catalog {
+    display: none;
   }
 }
 
@@ -2009,6 +2083,25 @@ h4 {
     font-size: 0.96rem;
   }
 
+  .route-outcome-card,
+  .questionnaire-card,
+  .step-detail-card {
+    gap: 0.9rem;
+  }
+
+  .answer-chip {
+    padding: 0.8rem 0.85rem;
+  }
+
+  .answer-chip strong {
+    font-size: 0.96rem;
+    line-height: 1.3;
+  }
+
+  .answer-chip span {
+    font-size: 0.92rem;
+  }
+
   .question-block,
   .option-card {
     padding: 0.9rem;
@@ -2018,6 +2111,10 @@ h4 {
     width: 1.75rem;
     height: 1.75rem;
     font-size: 0.95rem;
+  }
+
+  .stepper-item {
+    flex-basis: min(82vw, 14rem);
   }
 
   .check-toggle,
