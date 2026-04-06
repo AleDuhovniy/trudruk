@@ -564,7 +564,9 @@ h4 {
 
 .workspace-progress-meta strong {
   max-width: 28ch;
+  display: block;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .workspace-progress-bar {
@@ -658,6 +660,7 @@ h4 {
 .final-reminder strong {
   font-family: var(--font-display);
   letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
 }
 
 .section-heading p {
@@ -1195,6 +1198,41 @@ h4 {
   max-width: 60ch;
   line-height: 1.6;
   overflow-wrap: anywhere;
+}
+
+.workspace-progress-top > div,
+.workspace-progress-meta,
+.route-outcome-top > div,
+.step-detail-header > div,
+.question-head,
+.answer-chip,
+.detail-panel,
+.document-card,
+.result-document-item > div,
+.workspace-entry-card,
+.sidebar-card,
+.questionnaire-card,
+.route-outcome-card,
+.step-detail-card {
+  min-width: 0;
+}
+
+.workspace-progress-top strong,
+.workspace-progress-meta strong,
+.route-outcome-top h2,
+.step-detail-header h2,
+.question-head h3,
+.answer-chip strong,
+.detail-panel h3,
+.detail-panel p,
+.detail-panel li,
+.document-card strong,
+.document-card span,
+.document-note,
+.result-document-item strong,
+.result-document-item span {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .check-toggle {

@@ -1284,7 +1284,7 @@ const App = () => {
                       <h3>Что должно быть готово перед переходом</h3>
                       <p>{activeStep.requiredBeforeNext}</p>
                       <div className="law-basis">
-                        <span>Правовая опора</span>
+                        <span>Правовое основание</span>
                         <strong>{activeStep.legalBasis}</strong>
                       </div>
                       {activeStep.warning ? (
