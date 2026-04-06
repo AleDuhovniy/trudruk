@@ -642,7 +642,7 @@ const App = () => {
     ? `Ответьте на ${branchQuestions.length} вопроса, чтобы сервис собрал подходящий порядок действий.`
     : isResultsStageOpen
       ? resultView.documentSummary
-      : activeStep?.title ?? nextAction;
+      : nextAction;
   const workspacePrimaryTargetId = showQuestionnaire
     ? 'questionnaire-card'
     : isResultsStageOpen
@@ -981,7 +981,7 @@ const App = () => {
                 </div>
                 <div className="workspace-progress-meta">
                   <span>{scenarioCompletionPercent}% выполнено</span>
-                  <strong>{workspaceLeadMeta}</strong>
+                  {!showQuestionnaire && !isResultsStageOpen ? null : <strong>{workspaceLeadMeta}</strong>}
                 </div>
               </div>
               <div className="workspace-progress-bar" aria-hidden="true">
@@ -999,8 +999,8 @@ const App = () => {
                   </strong>
                 </div>
                 <div className="workspace-progress-meta">
+                  <strong className="workspace-progress-meta-title">{activeStep.title}</strong>
                   <span>{scenarioCompletionPercent}% выполнено</span>
-                  <strong>{activeStep.title}</strong>
                 </div>
               </div>
               <div className="workspace-progress-bar" aria-hidden="true">

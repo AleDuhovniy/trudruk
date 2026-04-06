@@ -3,7 +3,10 @@
   --brand-white: #ffffff;
   --brand-black: #222221;
   --brand-red: #c20e1a;
+  --brand-red-deep: #8f0912;
   --brand-blue: #27519c;
+  --brand-yellow: #f0b429;
+  --brand-yellow-deep: #8a5a00;
   --bg: #f4f7fb;
   --bg-deep: #e8eef8;
   --surface: rgba(255, 255, 255, 0.92);
@@ -569,6 +572,10 @@ h4 {
   overflow-wrap: anywhere;
 }
 
+.workspace-progress-meta-title:empty {
+  display: none;
+}
+
 .workspace-progress-bar {
   width: 100%;
   height: 0.8rem;
@@ -939,10 +946,27 @@ h4 {
 .route-outcome-card {
   display: grid;
   gap: 1.15rem;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   border: 1px solid rgba(28, 33, 40, 0.08);
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: none;
   box-shadow: var(--shadow);
+  transition:
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    transform 0.28s ease;
+}
+
+.route-outcome-card::before,
+.signal-pill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.28s ease;
 }
 
 .question-list,
@@ -1013,13 +1037,39 @@ h4 {
 }
 
 .route-outcome-card.signal-yellow {
+  border-color: rgba(240, 180, 41, 0.42);
   background:
-    linear-gradient(180deg, rgba(248, 249, 251, 0.98), rgba(255, 255, 255, 0.96));
+    linear-gradient(180deg, rgba(255, 246, 214, 0.96), rgba(255, 252, 240, 0.98));
+  box-shadow:
+    0 22px 44px rgba(138, 90, 0, 0.14),
+    0 0 0 1px rgba(240, 180, 41, 0.12);
+  animation: riskCardPulseYellow 2.8s ease-in-out infinite;
+}
+
+.route-outcome-card.signal-yellow::before {
+  background:
+    radial-gradient(circle at top right, rgba(240, 180, 41, 0.26), transparent 34%),
+    linear-gradient(120deg, transparent 15%, rgba(255, 255, 255, 0.34) 50%, transparent 85%);
+  opacity: 1;
+  animation: riskSheen 4.6s ease-in-out infinite;
 }
 
 .route-outcome-card.signal-red {
+  border-color: rgba(194, 14, 26, 0.34);
   background:
-    linear-gradient(180deg, rgba(255, 241, 242, 0.98), rgba(255, 255, 255, 0.96));
+    linear-gradient(180deg, rgba(255, 232, 235, 0.97), rgba(255, 247, 248, 0.98));
+  box-shadow:
+    0 22px 46px rgba(143, 9, 18, 0.18),
+    0 0 0 1px rgba(194, 14, 26, 0.12);
+  animation: riskCardPulseRed 2.35s ease-in-out infinite;
+}
+
+.route-outcome-card.signal-red::before {
+  background:
+    radial-gradient(circle at top right, rgba(194, 14, 26, 0.28), transparent 34%),
+    linear-gradient(120deg, transparent 15%, rgba(255, 255, 255, 0.24) 50%, transparent 85%);
+  opacity: 1;
+  animation: riskSheen 3.8s ease-in-out infinite;
 }
 
 .signal-pill,
@@ -1027,10 +1077,17 @@ h4 {
   display: inline-flex;
   align-items: center;
   width: fit-content;
+  position: relative;
+  overflow: hidden;
   border-radius: 999px;
   padding: 0.35rem 0.75rem;
   font-size: 0.8rem;
   font-weight: 700;
+  transition:
+    background-color 0.28s ease,
+    color 0.28s ease,
+    box-shadow 0.28s ease,
+    transform 0.28s ease;
 }
 
 .signal-pill.signal-green {
@@ -1039,13 +1096,43 @@ h4 {
 }
 
 .signal-pill.signal-yellow {
-  background: rgba(34, 34, 33, 0.08);
-  color: var(--brand-black);
+  background: rgba(240, 180, 41, 0.18);
+  color: var(--brand-yellow-deep);
+  box-shadow:
+    inset 0 0 0 1px rgba(240, 180, 41, 0.24),
+    0 10px 22px rgba(138, 90, 0, 0.14);
+  animation: riskBadgePulseYellow 2.2s ease-in-out infinite;
+}
+
+.signal-pill.signal-yellow::before {
+  background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.62) 50%, transparent 80%);
+  opacity: 1;
+  animation: riskSheen 2.8s linear infinite;
 }
 
 .signal-pill.signal-red {
-  background: rgba(194, 14, 26, 0.12);
+  background: rgba(194, 14, 26, 0.16);
   color: var(--brand-red);
+  box-shadow:
+    inset 0 0 0 1px rgba(194, 14, 26, 0.2),
+    0 12px 24px rgba(143, 9, 18, 0.16);
+  animation: riskBadgePulseRed 1.85s ease-in-out infinite;
+}
+
+.signal-pill.signal-red::before {
+  background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.4) 50%, transparent 80%);
+  opacity: 1;
+  animation: riskSheen 2.3s linear infinite;
+}
+
+.route-outcome-card.signal-yellow .answer-chip {
+  border-color: rgba(240, 180, 41, 0.18);
+  background: rgba(255, 250, 239, 0.92);
+}
+
+.route-outcome-card.signal-red .answer-chip {
+  border-color: rgba(194, 14, 26, 0.16);
+  background: rgba(255, 246, 247, 0.92);
 }
 
 .route-outcome-body {
@@ -1605,19 +1692,99 @@ h4 {
   }
 }
 
+@keyframes riskCardPulseYellow {
+  0%,
+  100% {
+    box-shadow:
+      0 22px 44px rgba(138, 90, 0, 0.14),
+      0 0 0 0 rgba(240, 180, 41, 0.22);
+    transform: translateY(0);
+  }
+  50% {
+    box-shadow:
+      0 28px 54px rgba(138, 90, 0, 0.18),
+      0 0 0 10px rgba(240, 180, 41, 0);
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes riskCardPulseRed {
+  0%,
+  100% {
+    box-shadow:
+      0 22px 46px rgba(143, 9, 18, 0.18),
+      0 0 0 0 rgba(194, 14, 26, 0.18);
+    transform: translateY(0);
+  }
+  50% {
+    box-shadow:
+      0 30px 58px rgba(143, 9, 18, 0.22),
+      0 0 0 12px rgba(194, 14, 26, 0);
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes riskBadgePulseYellow {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow:
+      inset 0 0 0 1px rgba(240, 180, 41, 0.24),
+      0 10px 22px rgba(138, 90, 0, 0.14);
+  }
+  50% {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 0 0 1px rgba(240, 180, 41, 0.32),
+      0 14px 28px rgba(138, 90, 0, 0.18);
+  }
+}
+
+@keyframes riskBadgePulseRed {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow:
+      inset 0 0 0 1px rgba(194, 14, 26, 0.2),
+      0 12px 24px rgba(143, 9, 18, 0.16);
+  }
+  50% {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 0 0 1px rgba(194, 14, 26, 0.28),
+      0 16px 32px rgba(143, 9, 18, 0.22);
+  }
+}
+
+@keyframes riskSheen {
+  0% {
+    transform: translateX(-38%);
+  }
+  55%,
+  100% {
+    transform: translateX(38%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .primary-button,
   .secondary-button,
   .scenario-card,
   .stepper-item,
   .download-link,
-  .step-next-button--highlighted {
+  .step-next-button--highlighted,
+  .route-outcome-card.signal-yellow,
+  .route-outcome-card.signal-red,
+  .signal-pill.signal-yellow,
+  .signal-pill.signal-red {
     animation: none !important;
     transition: none !important;
   }
 
   .primary-button::before,
-  .secondary-button::before {
+  .secondary-button::before,
+  .route-outcome-card::before,
+  .signal-pill::before {
     display: none;
   }
 }
@@ -1856,6 +2023,10 @@ h4 {
 
   .workspace-progress-meta strong {
     display: none;
+  }
+
+  .workspace-progress-meta-title {
+    display: none !important;
   }
 
   .workspace-sidebar {
