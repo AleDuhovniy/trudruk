@@ -25,7 +25,7 @@ jobs:
         run: npm run build
 
       - name: Upload Pages artifact
-        uses: gitverse/upload-pages-artifact@v1.0.0
+        uses: actions/upload-pages-artifact@v1.0.0
         with:
           path: dist
 
@@ -34,4 +34,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy Pages
-        uses: gitverse/deploy-pages@v1.0.0
+        uses: actions/deploy-pages@v1.0.0
