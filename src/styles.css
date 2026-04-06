@@ -595,6 +595,26 @@ h4 {
   line-height: 1.6;
 }
 
+.zone-actions .primary-button,
+.zone-actions .secondary-button,
+.workspace-quick-actions .primary-button,
+.workspace-quick-actions .secondary-button {
+  font-size: 0.96rem;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.workspace-quick-actions .primary-button {
+  color: #ffffff;
+}
+
+.zone-actions .secondary-button,
+.workspace-quick-actions .secondary-button {
+  color: var(--text);
+}
+
 #questionnaire-card,
 #current-step-card,
 #documents-panel,
@@ -1664,6 +1684,7 @@ h4 {
 
   .layout {
     gap: 1.4rem;
+    padding-top: max(0.9rem, env(safe-area-inset-top));
     padding-bottom: 3rem;
   }
 
@@ -1717,18 +1738,11 @@ h4 {
     border-radius: 1.15rem;
   }
 
-  .zone-bar {
-    padding: 0.85rem;
-  }
-
-  .zone-steps,
-  .catalog-flow {
+  .zone-bar,
+  .catalog-flow,
+  .workspace-quick-actions,
+  .workspace-quick-note {
     display: none;
-  }
-
-  .zone-actions {
-    width: 100%;
-    gap: 0.6rem;
   }
 
   .catalog-stage-layout,
@@ -1736,10 +1750,6 @@ h4 {
   .workspace-main,
   .template-catalog {
     gap: 1rem;
-  }
-
-  .workspace-quick-actions {
-    grid-template-columns: 1fr;
   }
 
   .scenario-grid {
@@ -1803,6 +1813,11 @@ h4 {
   .workspace-entry-card p,
   .scenario-summary p {
     max-width: none;
+  }
+
+  .catalog-stage-header p,
+  .workspace-entry-card p {
+    display: none;
   }
 
   .stepper-list {
@@ -1904,15 +1919,6 @@ h4 {
 }
 
 @media (max-width: 560px) {
-  .zone-bar {
-    gap: 0.7rem;
-    padding: 0.75rem;
-  }
-
-  .zone-actions {
-    gap: 0.5rem;
-  }
-
   .eyebrow {
     margin-bottom: 0.8rem;
     font-size: 0.67rem;
