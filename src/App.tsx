@@ -12,6 +12,9 @@ import {
 } from './types';
 import { emptyScenarioProgress, loadProgress, saveProgress, type ProgressState } from './utils/storage';
 
+const resolvePublicFilePath = (filePath?: string) =>
+  filePath ? `${import.meta.env.BASE_URL}${filePath.replace(/^\/+/, '')}` : undefined;
+
 const getProgressForScenario = (progressState: ProgressState, scenarioId: string) => {
   const stored = progressState[scenarioId];
 
@@ -1332,7 +1335,7 @@ const App = () => {
                               </div>
                               {template.isAvailable && template.filePath ? (
                                 <a
-                                  href={template.filePath}
+                                  href={resolvePublicFilePath(template.filePath)}
                                   download
                                   className="download-link"
                                   onClick={() => trackDownload(template)}
@@ -1561,7 +1564,7 @@ const ReferenceCard = ({ resource }: { resource: ReferenceResource }) => (
     <strong>{resource.title}</strong>
     <span>{resource.audience}</span>
     <p>{resource.description}</p>
-    <a className="download-link" href={resource.filePath} download>
+    <a className="download-link" href={resolvePublicFilePath(resource.filePath)} download>
       Скачать материал
     </a>
   </div>

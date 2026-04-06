@@ -1723,25 +1723,7 @@ h4 {
 
   .zone-steps,
   .catalog-flow {
-    width: 100%;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 0.2rem;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    scroll-snap-type: x proximity;
-  }
-
-  .zone-steps::-webkit-scrollbar,
-  .catalog-flow::-webkit-scrollbar {
     display: none;
-  }
-
-  .zone-chip,
-  .flow-step {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    scroll-snap-align: start;
   }
 
   .zone-actions {
@@ -1770,12 +1752,19 @@ h4 {
     border-radius: 1.2rem;
   }
 
+  .scenario-card p {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
   .scenario-card h3 {
     font-size: 1.08rem;
   }
 
   .scenario-card ul {
-    padding-left: 1rem;
+    display: none;
   }
 
   .scenario-short,
@@ -1807,6 +1796,13 @@ h4 {
 
   .workspace-sidebar {
     gap: 0.8rem;
+  }
+
+  .catalog-stage-header p,
+  .catalog-preview-card p,
+  .workspace-entry-card p,
+  .scenario-summary p {
+    max-width: none;
   }
 
   .stepper-list {
@@ -1908,6 +1904,15 @@ h4 {
 }
 
 @media (max-width: 560px) {
+  .zone-bar {
+    gap: 0.7rem;
+    padding: 0.75rem;
+  }
+
+  .zone-actions {
+    gap: 0.5rem;
+  }
+
   .eyebrow {
     margin-bottom: 0.8rem;
     font-size: 0.67rem;
@@ -1979,6 +1984,10 @@ h4 {
   .scenario-card-top,
   .scenario-card-footer {
     gap: 0.65rem;
+  }
+
+  .scenario-progress {
+    width: 100%;
   }
 
   .scenario-select {
