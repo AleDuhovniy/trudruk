@@ -92,7 +92,9 @@ h4 {
 
 .page-shell--landing {
   min-height: 100vh;
+  min-height: 100svh;
   height: 100vh;
+  height: 100svh;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -123,6 +125,7 @@ h4 {
 
 .hero--landing {
   min-height: 100vh;
+  min-height: 100svh;
   align-items: center;
   padding-bottom: 4rem;
 }
@@ -578,6 +581,26 @@ h4 {
   border-radius: inherit;
   background: linear-gradient(90deg, #27519c, #3a68bb);
   transition: width 0.25s ease;
+}
+
+.workspace-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.workspace-quick-note {
+  color: var(--muted);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+#questionnaire-card,
+#current-step-card,
+#documents-panel,
+#results-panel,
+#workspace-support {
+  scroll-margin-top: 1rem;
 }
 
 .catalog-section,
@@ -1559,6 +1582,14 @@ h4 {
     position: static;
     width: 100%;
   }
+
+  .workspace-main {
+    order: 1;
+  }
+
+  .workspace-sidebar {
+    order: 2;
+  }
 }
 
 @media (max-width: 920px) {
@@ -1725,6 +1756,10 @@ h4 {
     gap: 1rem;
   }
 
+  .workspace-quick-actions {
+    grid-template-columns: 1fr;
+  }
+
   .scenario-grid {
     gap: 0.8rem;
   }
@@ -1772,6 +1807,21 @@ h4 {
 
   .workspace-sidebar {
     gap: 0.8rem;
+  }
+
+  .stepper-list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(16rem, 84vw);
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .stepper-list::-webkit-scrollbar {
+    display: none;
   }
 
   .step-detail-header,
@@ -1822,6 +1872,8 @@ h4 {
   .stepper-item {
     padding: 0.8rem;
     border-radius: 1rem;
+    min-height: 100%;
+    scroll-snap-align: start;
   }
 
   .step-index {

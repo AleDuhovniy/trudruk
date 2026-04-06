@@ -625,6 +625,33 @@ const App = () => {
       isOpened: downloadedIds.includes(template.id),
     })),
   };
+  const workspaceLeadLabel = showQuestionnaire
+    ? 'Следующий экран'
+    : isResultsStageOpen
+      ? 'Текущий экран'
+      : 'Текущий шаг';
+  const workspaceLeadTitle = showQuestionnaire
+    ? 'Уточнение ситуации'
+    : isResultsStageOpen
+      ? 'Итоги по ситуации'
+      : `Шаг ${currentStepNumber} из ${visibleSteps.length}`;
+  const workspaceLeadMeta = showQuestionnaire
+    ? `Ответьте на ${branchQuestions.length} вопроса, чтобы сервис собрал подходящий порядок действий.`
+    : isResultsStageOpen
+      ? resultView.documentSummary
+      : activeStep?.title ?? nextAction;
+  const workspacePrimaryTargetId = showQuestionnaire
+    ? 'questionnaire-card'
+    : isResultsStageOpen
+      ? 'results-panel'
+      : 'current-step-card';
+  const workspaceDocumentsTargetId = isResultsStageOpen ? 'results-panel' : 'documents-panel';
+  const workspacePrimaryActionLabel = showQuestionnaire
+    ? 'К мини-опросу'
+    : isResultsStageOpen
+      ? 'К итогам'
+      : 'К текущему шагу';
+  const workspaceDocumentsActionLabel = isResultsStageOpen ? 'К комплекту' : 'К документам';
 
   const openCatalog = () => {
     setCatalogScenarioId(null);
@@ -713,6 +740,13 @@ const App = () => {
     setIsResultsStageOpen(false);
     setResultSnapshot(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
   };
 
   return (
@@ -935,7 +969,24 @@ const App = () => {
             Здесь открыт порядок действий только по выбранной ситуации. Чтобы перейти к другой
             ситуации, сначала вернитесь в каталог.
           </p>
-          {!showQuestionnaire && activeStep ? (
+          {(showQuestionnaire || isResultsStageOpen) ? (
+            <div className="workspace-progress-card">
+              <div className="workspace-progress-top">
+                <div>
+                  <span className="workspace-progress-label">{workspaceLeadLabel}</span>
+                  <strong>{workspaceLeadTitle}</strong>
+                </div>
+                <div className="workspace-progress-meta">
+                  <span>{scenarioCompletionPercent}% выполнено</span>
+                  <strong>{workspaceLeadMeta}</strong>
+                </div>
+              </div>
+              <div className="workspace-progress-bar" aria-hidden="true">
+                <span style={{ width: `${scenarioCompletionPercent}%` }} />
+              </div>
+            </div>
+          ) : null}
+          {!showQuestionnaire && !isResultsStageOpen && activeStep ? (
             <div className="workspace-progress-card">
               <div className="workspace-progress-top">
                 <div>
@@ -954,10 +1005,38 @@ const App = () => {
               </div>
             </div>
           ) : null}
+          <div className="workspace-quick-actions">
+            <button
+              className="primary-button"
+              type="button"
+              onClick={() => scrollToSection(workspacePrimaryTargetId)}
+            >
+              {workspacePrimaryActionLabel}
+            </button>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => scrollToSection(workspaceDocumentsTargetId)}
+              disabled={showQuestionnaire}
+            >
+              {workspaceDocumentsActionLabel}
+            </button>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => scrollToSection('workspace-support')}
+            >
+              Риски и подсказки
+            </button>
+          </div>
+          <p className="workspace-quick-note">
+            На телефоне можно идти по кнопкам выше: они сразу переводят к нужной части процедуры без лишней
+            прокрутки.
+          </p>
         </section>
 
         <section className="workspace-section">
-          <aside className="workspace-sidebar">
+          <aside className="workspace-sidebar" id="workspace-support">
             <div className="sidebar-card scenario-summary">
               <span className="eyebrow">Выбранная ситуация</span>
               <h2>{selectedScenario.title}</h2>
@@ -1012,7 +1091,7 @@ const App = () => {
 
           <div className="workspace-main">
             {showQuestionnaire ? (
-              <section className="questionnaire-card">
+              <section className="questionnaire-card" id="questionnaire-card">
                 <div className="section-heading compact">
                   <span className="eyebrow">Уточните ситуацию</span>
                   <h2>Сервис уточнит порядок действий с учетом ваших ответов</h2>
@@ -1211,7 +1290,7 @@ const App = () => {
                     </section>
                   </div>
 
-                  <section className="documents-panel">
+                  <section className="documents-panel" id="documents-panel">
                     <div className="section-heading compact">
                       <span className="eyebrow">Документы по этапу</span>
                       <h3>Что можно скачать или подготовить</h3>
